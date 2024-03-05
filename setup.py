@@ -13,6 +13,7 @@ pykern.pksetup.setup(
     description="elegant tools for use in LUME",
     install_requires=[
         "pykern",
+        "sirepo",
     ],
     license="http://www.apache.org/licenses/LICENSE-2.0.html",
     url="https://github.com/radiasoft/lume-rselegant",
