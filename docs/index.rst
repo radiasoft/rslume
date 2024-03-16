@@ -1,12 +1,12 @@
-Welcome to lume-rselegant
+Welcome to rslume
 =================
 
-elegant tools for use in LUME
+RadiaSoft LUME wrappers
 
 .. toctree::
    :maxdepth: 2
 
-   lume-rselegant
+   rslume
    modules
 
 Indices and tables

@@ -9,4 +9,4 @@ import pytest
 
 
 def test_1():
-    import lume-rselegant
+    import rslume

@@ -1,10 +1,10 @@
-### lume-rselegant
+### rslume
 
-elegant tools for use in LUME
+RadiaSoft LUME wrappers
 
-Learn more at https://github.com/radiasoft/lume-rselegant.
+Learn more at https://github.com/radiasoft/rslume.
 
-Documentation: http://lume-rselegant.readthedocs.org/en/latest/
+Documentation: http://rslume.readthedocs.org/en/latest/
 
 #### License
 

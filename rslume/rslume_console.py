@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Front-end command line for :mod:`lume-rselegant`.
+"""Front-end command line for :mod:`rslume`.
 
 See :mod:`pykern.pkcli` for how this module is used.
 
@@ -11,7 +11,7 @@ import sys
 
 
 def main():
-    return pykern.pkcli.main("lume-rselegant")
+    return pykern.pkcli.main("rslume")
 
 
 if __name__ == "__main__":
