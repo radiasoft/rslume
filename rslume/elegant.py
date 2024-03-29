@@ -5,40 +5,25 @@
 
 from pmd_beamphysics import ParticleGroup
 from pykern import pkio, pksubprocess
-from pykern.pkdebug import pkdlog
+from pykern.pkcollections import PKDict
 from sirepo.template import elegant_common
-import lume.base
 import os
 import pmd_beamphysics.interfaces.elegant
-import sirepo.lib
+import rslume.wrapper
 
 
-class Elegant(lume.base.CommandWrapper):
+class Elegant(rslume.wrapper.SirepoWrapper):
     def __init__(self, *args, **kwargs):
         super().__init__(
+            sim_type="elegant",
             command="elegant",
             command_mpi="Pelegant",
+            run_env=elegant_common.subprocess_env(),
             *args,
             **kwargs,
         )
-        if not self.input_file:
-            raise AssertionError("Missing input_file argument")
-        self.load_input(self.input_file)
-        self.configure()
 
     # --- lume-base implementation ---
-
-    def archive(self, h5=None):
-        raise NotImplementedError("archive() not yet implemented.")
-
-    def configure(self):
-        self.setup_workdir(self._workdir)
-
-    def input_parser(self, path):
-        return sirepo.lib.Importer("elegant").parse_file(path)
-
-    def load_archive(self, h5, configure=True):
-        raise NotImplementedError("load_archive() not yet implemented.")
 
     def load_output(self):
         self.output = {}
@@ -52,43 +37,27 @@ class Elegant(lume.base.CommandWrapper):
         #TODO(pjm): load other sdds output files
         #TODO(pjm): load warnings and errors from log
 
-    def plot(self):
-        raise NotImplementedError("plot() not yet implemented.")
+    # -- RS addition
 
-    def run(self):
-        runscript = self.get_run_script(write_to_path=False)
-        self.vprint(f"Running '{runscript}' in {self.path}")
-        self.write_input()
-        with pkio.save_chdir(self.path):
-            pksubprocess.check_call_with_signals(
-                runscript,
-                msg=pkdlog,
-                output="elegant.log",
-                env=elegant_common.subprocess_env(),
-            )
-        self.load_output()
-
-    def write_input(self):
-        self._input.write_files(self.path)
-
-    # --- elegant-specific interface ---
-
-    def cmd(self, command_name, count=0):
-        return self._find_by_field("commands", "_type", command_name, count)
-
-    def el(self, element_name):
-        return self._find_by_field("elements","name",  element_name)
-
-    def final_particles(self):
-        if "particles" in self.output:
-            return self.output["particles"]
-        return None
-
-    def _find_by_field(self, container, field, name, count=0):
-        c = 0
-        for v in self._input.models[container]:
-            if v[field] == name:
-                if c == count:
-                    return v
-                c += 1
-        raise AssertionError(f"unknown name: {name}")
+    def set_particle_input(self, particle_group, filename='in.sdds'):
+        filepath = os.path.join(self.workdir, filename)
+        pmd_beamphysics.interfaces.elegant.write_elegant(
+            particle_group,
+            filepath,
+            verbose=True,
+        )
+        if self.cmd('bunched_beam', required=False):
+            for idx, v in enumerate(self._input.models.commands):
+                if v._type == 'bunched_beam':
+                    i = v._id
+                    self._input.models.commands[idx] = PKDict(
+                        _id=i,
+                        _type='sdds_beam',
+                        input=filename,
+                    )
+                    break
+        beam = self.cmd('sdds_beam')
+        beam.center_arrival_time = '1'
+        beam.center_transversely = '1'
+        beam.reverse_t_sign = '1'
+        self.cmd('run_setup').expand_for = filename
