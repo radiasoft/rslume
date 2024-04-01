@@ -25,12 +25,21 @@ class OPAL(rslume.wrapper.SirepoWrapper):
 
     # --- lume-base implementation ---
 
+    def _last_data_step(self, h5file):
+        step = 0
+        key = f"Step#{step}"
+        while key in h5file:
+            step += 1
+            key = f"Step#{step}"
+        return step - 1
+
     def load_output(self):
         self.output = {}
         with h5py.File(os.path.join(self.path, "opal.h5"), "r") as f:
             self.output["particles"] = ParticleGroup(
-                #TODO(pjm): get last Step
-                data=pmd_beamphysics.interfaces.opal.opal_to_data(f["/Step#0"]),
+                data=pmd_beamphysics.interfaces.opal.opal_to_data(
+                    f[f"/Step#{self._last_data_step(f)}"],
+                ),
             )
 
     # -- RS addition

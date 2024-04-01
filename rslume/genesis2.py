@@ -8,6 +8,7 @@ import numpy
 import os
 import pmd_beamphysics.interfaces.genesis
 import pmd_beamphysics.particles
+import pmd_beamphysics.units
 
 
 class Genesis2(genesis.genesis2.Genesis2):
@@ -15,6 +16,7 @@ class Genesis2(genesis.genesis2.Genesis2):
     # override lume-genesis final_particles()
 
     def final_particles(self):
+        # compute required wavelengths to hold the whole beam and center at 0
         if "dpa" not in self.output["data"]:
             return None
         d = self.output["data"]["dpa"]
@@ -22,7 +24,6 @@ class Genesis2(genesis.genesis2.Genesis2):
         v = pmd_beamphysics.particles.ParticleGroup(
             data=pmd_beamphysics.interfaces.genesis.genesis2_dpa_to_data(
                 d, xlamds=self["xlamds"], current=self.output["data"]["current"],
-                # compute required wavelengths to hold the whole beam
                 zsep=numpy.max(d[:,1,:]) / (2 * numpy.pi),
             )
         )
@@ -36,8 +37,6 @@ class Genesis2(genesis.genesis2.Genesis2):
     def set_particle_input(self, particle_group, filename='inpart.dat'):
         filepath = os.path.join(self.workdir, filename)
 
-        # pt ct x y ux uy
-
         # gamma
         # ct * 2pi / xlamds
         # x
@@ -45,25 +44,20 @@ class Genesis2(genesis.genesis2.Genesis2):
         # ux (gamma * beta_x)
         # uy (gamma * beta_y)
 
-        gamma = particle_group.gamma
-        GBx = gamma*particle_group.beta_x
-        GBy = gamma*particle_group.beta_y
-
         d = numpy.zeros((6, len(particle_group.x)))
-        d[0] = gamma
-        d[1] = particle_group.t * 2 * numpy.pi / self["xlamds"]
+        d[0] = particle_group.gamma
+        d[1] = particle_group.t * pmd_beamphysics.units.c_light * 2 * numpy.pi / self["xlamds"]
         d[1] -= numpy.mean(d[1])
         d[2] = particle_group.x
         d[3] = particle_group.y
-        d[4] = GBx
-        d[5] = GBy
+        d[4] = particle_group.gamma * particle_group.beta_x
+        d[5] = particle_group.gamma * particle_group.beta_y
 
         self["partfile"] = filename
         self["ippart"] = 0
         self["ipradi"] = 0
         factor = 4 * self["nbins"]
         self["npart"] = int(len(particle_group.x) / factor) * factor
-        print(f'npart = {self["npart"]}')
         d = d[:, :self["npart"]]
 
         with open(filepath, "wb") as f:

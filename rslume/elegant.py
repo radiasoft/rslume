@@ -57,6 +57,7 @@ class Elegant(rslume.wrapper.SirepoWrapper):
                     )
                     break
         beam = self.cmd('sdds_beam')
+        beam.input = filename
         beam.center_arrival_time = '1'
         beam.center_transversely = '1'
         beam.reverse_t_sign = '1'
