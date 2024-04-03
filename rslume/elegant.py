@@ -3,13 +3,13 @@
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
+import rslume.wrapper
 from pmd_beamphysics import ParticleGroup
 from pykern import pkio, pksubprocess
 from pykern.pkcollections import PKDict
 from sirepo.template import elegant_common
 import os
 import pmd_beamphysics.interfaces.elegant
-import rslume.wrapper
 
 
 class Elegant(rslume.wrapper.SirepoWrapper):

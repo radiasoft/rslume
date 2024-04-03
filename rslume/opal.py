@@ -3,13 +3,13 @@
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
+import rslume.wrapper
 from pmd_beamphysics import ParticleGroup
 from pykern.pkcollections import PKDict
 import h5py
 import numpy
 import os
 import pmd_beamphysics.interfaces.opal
-import rslume.wrapper
 
 class OPAL(rslume.wrapper.SirepoWrapper):
     def __init__(self, *args, **kwargs):

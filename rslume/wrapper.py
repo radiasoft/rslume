@@ -3,10 +3,15 @@
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
+#TODO(pjm): work-around until https://github.com/radiasoft/sirepo/issues/6632 is addressed
+import os
+os.environ['SIREPO_FEATURE_CONFIG_SIM_TYPES'] = 'elegant:opal'
+
 from pykern import pkio, pksubprocess
 from pykern.pkdebug import pkdlog
 import lume.base
 import sirepo.lib
+
 
 class SirepoWrapper(lume.base.CommandWrapper):
 
