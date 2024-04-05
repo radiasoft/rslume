@@ -59,6 +59,7 @@ class Elegant(rslume.wrapper.SirepoWrapper):
         beam = self.cmd('sdds_beam')
         beam.input = filename
         beam.center_arrival_time = '1'
-        beam.center_transversely = '1'
+        # don't automatically center_transversely as so beam offsets can be tested between simulations
+        # beam.center_transversely = '1'
         beam.reverse_t_sign = '1'
         self.cmd('run_setup').expand_for = filename
