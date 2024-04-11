@@ -1,0 +1,40 @@
+[build-system]
+requires = ["chronver", "setuptools>=66"]
+build-backend = "setuptools.build_meta"
+
+[project]
+authors = [
+    { name = "RadiaSoft LLC", email = "pip@radiasoft.net" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "pykern",
+    "lume-base",
+    "lume-genesis @ git+https://github.com/slaclab/lume-genesis.git",
+    "sirepo",
+]
+description = "RadiaSoft adapter for Lume"
+dynamic = ["version"]
+name = "rslume"
+readme = "README.md"
+
+[project.scripts]
+rslume = "rslume.rslume_console:main"
+
+[project.urls]
+Homepage = "https://git.radiasoft.org/rslume"
+
+[tool.setuptools.package-data]
+rslume = ["package_data/**"]
+
+[tool.setuptools.packages.find]
+include = ["rslume*"]
