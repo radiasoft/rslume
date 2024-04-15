@@ -54,6 +54,8 @@ class Genesis2(genesis.genesis2.Genesis2):
         d[5] = particle_group.gamma * particle_group.beta_y
 
         self["partfile"] = filename
+        self["gamma0"] = numpy.mean(particle_group.gamma)
+        self["delgam"] = self["gamma0"] * 1e-3
         self["ippart"] = 0
         self["ipradi"] = 0
         factor = 4 * self["nbins"]
