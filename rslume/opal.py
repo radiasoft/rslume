@@ -11,12 +11,13 @@ import numpy
 import os
 import pmd_beamphysics.interfaces.opal
 
+
 class OPAL(rslume.wrapper.SirepoWrapper):
     def __init__(self, *args, **kwargs):
         super().__init__(
             sim_type="opal",
             command="opal",
-            #TODO(pjm): proper mpi exec command w/cores
+            # TODO(pjm): proper mpi exec command w/cores
             command_mpi="mpiexec -n 4 opal",
             run_env=None,
             *args,
@@ -44,7 +45,7 @@ class OPAL(rslume.wrapper.SirepoWrapper):
 
     # -- RS addition
 
-    def set_particle_input(self, particle_group, filename='in.dat'):
+    def set_particle_input(self, particle_group, filename="in.dat"):
         filepath = os.path.join(self.workdir, filename)
         pmd_beamphysics.interfaces.opal.write_opal(
             particle_group,

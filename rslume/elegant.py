@@ -34,32 +34,32 @@ class Elegant(rslume.wrapper.SirepoWrapper):
                     os.path.join(self.path, c.output),
                 ),
             )
-        #TODO(pjm): load other sdds output files
-        #TODO(pjm): load warnings and errors from log
+        # TODO(pjm): load other sdds output files
+        # TODO(pjm): load warnings and errors from log
 
     # -- RS addition
 
-    def set_particle_input(self, particle_group, filename='in.sdds'):
+    def set_particle_input(self, particle_group, filename="in.sdds"):
         filepath = os.path.join(self.workdir, filename)
         pmd_beamphysics.interfaces.elegant.write_elegant(
             particle_group,
             filepath,
             verbose=True,
         )
-        if self.cmd('bunched_beam', required=False):
+        if self.cmd("bunched_beam", required=False):
             for idx, v in enumerate(self._input.models.commands):
-                if v._type == 'bunched_beam':
+                if v._type == "bunched_beam":
                     i = v._id
                     self._input.models.commands[idx] = PKDict(
                         _id=i,
-                        _type='sdds_beam',
+                        _type="sdds_beam",
                         input=filename,
                     )
                     break
-        beam = self.cmd('sdds_beam')
+        beam = self.cmd("sdds_beam")
         beam.input = filename
-        beam.center_arrival_time = '1'
+        beam.center_arrival_time = "1"
         # don't automatically center_transversely as so beam offsets can be tested between simulations
         # beam.center_transversely = '1'
-        beam.reverse_t_sign = '1'
-        self.cmd('run_setup').expand_for = filename
+        beam.reverse_t_sign = "1"
+        self.cmd("run_setup").expand_for = filename
