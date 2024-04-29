@@ -43,9 +43,10 @@ class OPAL(rslume.wrapper.SirepoWrapper):
                 ),
             )
 
-    # -- RS addition
-
-    def set_particle_input(self, particle_group, filename="in.dat"):
+    def write_initial_particles(self, filename="in.dat"):
+        particle_group = self.initial_particles
+        if not particle_group:
+            return
         filepath = os.path.join(self.workdir, filename)
         pmd_beamphysics.interfaces.opal.write_opal(
             particle_group,

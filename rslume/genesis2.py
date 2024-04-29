@@ -13,7 +13,7 @@ import pmd_beamphysics.units
 
 class Genesis2(genesis.genesis2.Genesis2):
 
-    # override lume-genesis final_particles()
+    # override lume-genesis final_particles() and write_input()
 
     def final_particles(self):
         # compute required wavelengths to hold the whole beam and center at 0
@@ -33,9 +33,10 @@ class Genesis2(genesis.genesis2.Genesis2):
         v.t -= numpy.mean(v.t)
         return v
 
-    # -- RS addition
-
-    def set_particle_input(self, particle_group, filename="inpart.dat"):
+    def write_initial_particles(self, filename="inpart.dat"):
+        particle_group = self.initial_particles
+        if not particle_group:
+            return
         filepath = os.path.join(self.workdir, filename)
 
         # gamma
@@ -71,3 +72,7 @@ class Genesis2(genesis.genesis2.Genesis2):
 
         with open(filepath, "wb") as f:
             d.tofile(f)
+
+    def write_input(self):
+        self.write_initial_particles()
+        super().write_input()
