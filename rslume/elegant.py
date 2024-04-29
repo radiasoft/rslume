@@ -37,9 +37,10 @@ class Elegant(rslume.wrapper.SirepoWrapper):
         # TODO(pjm): load other sdds output files
         # TODO(pjm): load warnings and errors from log
 
-    # -- RS addition
-
-    def set_particle_input(self, particle_group, filename="in.sdds"):
+    def write_initial_particles(self, filename="in.sdds"):
+        particle_group = self.initial_particles
+        if not particle_group:
+            return
         filepath = os.path.join(self.workdir, filename)
         pmd_beamphysics.interfaces.elegant.write_elegant(
             particle_group,

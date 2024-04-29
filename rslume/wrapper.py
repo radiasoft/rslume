@@ -63,6 +63,7 @@ class SirepoWrapper(lume.base.CommandWrapper):
         raise NotImplementedError("plot() not yet implemented.")
 
     def write_input(self):
+        self.write_initial_particles()
         self._input.write_files(self.path)
 
     # Sirepo lattice and command accessors
