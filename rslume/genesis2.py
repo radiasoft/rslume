@@ -29,7 +29,6 @@ class Genesis2(genesis.genesis2.Genesis2):
                 zsep=numpy.max(d[:, 1, :]) / (2 * numpy.pi),
             )
         )
-        # center psi
         v.t -= numpy.mean(v.t)
         return v
 
@@ -49,7 +48,7 @@ class Genesis2(genesis.genesis2.Genesis2):
         d = numpy.zeros((6, len(particle_group.x)))
         d[0] = particle_group.gamma
         d[1] = (
-            particle_group.t
+            -particle_group.t
             * pmd_beamphysics.units.c_light
             * 2
             * numpy.pi
