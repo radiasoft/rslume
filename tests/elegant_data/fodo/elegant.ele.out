@@ -6,6 +6,7 @@
 &run_setup
   semaphore_file = run_setup.semaphore,
   lattice = "elegant.lte",
+  output = "run_setup.output.sdds",
   p_central_mev = 1000,
   sigma = "run_setup.sigma.sdds",
   use_beamline = "FODOCELL",

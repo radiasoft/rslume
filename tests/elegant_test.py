@@ -36,7 +36,7 @@ def test_archive():
         pkunit.pkeq("eV", str(P.units("mean_energy")))
         E.output["particles"]["W1"].write(str(w.join("W1.h5")))
         for f in (n, "elegant.ele", "elegant.lte"):
-            pkunit.file_eq(d.join(f"{n}.out"), actual_path=w.join(n))
+            pkunit.file_eq(d.join(f"{f}.out"), actual_path=w.join(f))
         a = str(w.join("archive.h5"))
         E.archive(a)
 
