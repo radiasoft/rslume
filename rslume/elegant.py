@@ -12,7 +12,10 @@ import h5py
 import os
 import pmd_beamphysics.interfaces.elegant
 import pykern.pkio
+import pykern.pkjson
+import re
 import rslume.wrapper
+import string
 
 
 class Elegant(rslume.wrapper.SirepoWrapper):
@@ -76,19 +79,17 @@ class Elegant(rslume.wrapper.SirepoWrapper):
 
     def archive(self, h5=None):
 
+        def _initial_particles(filename, group, particle_group):
+            # initial particles get written in two places
+            for g in (group, particle_group):
+                _particle_group_from_sdds(filename, g, "initial_particles")
+
         def _particle_data(group):
-            b = self.cmd("sdds_beam", required=False) or self.cmd(
-                "bunched_beam", required=False
-            )
-            if b:
-                p = None
-                if b._type == "sdds_beam":
-                    _particle_group_from_sdds(b.input, group, "initial_particles")
-                elif b.bunch:
-                    _particle_group_from_sdds(
-                        "bunched_beam.bunch.sdds", group, "initial_particles"
-                    )
             g = group.create_group("particles")
+            if b := self.cmd("sdds_beam", required=False):
+                _initial_particles(b.input, group, g)
+            elif b := self.cmd("bunched_beam", required=False):
+                _initial_particles("bunched_beam.bunch.sdds", group, g)
             _particle_group_from_sdds("run_setup.output.sdds", g, "final_particles")
             for el in self._input.models.elements:
                 if el.type == "WATCH" and el.filename:
@@ -107,24 +108,25 @@ class Elegant(rslume.wrapper.SirepoWrapper):
             for c in self.output.stats:
                 ds = group.create_dataset(c, data=self.output.stats[c])
                 ds.attrs["unitSymbol"] = self.output.stats_unit[c]
+                ds.attrs["label"] = self.output.stats_label[c]
 
         assert isinstance(h5, str)
         with h5py.File(h5, "w") as f:
             g = f.create_group("elegant")
             _stat_data(g.create_group("stats"))
             _particle_data(g)
+            g.attrs["lattice"] = pykern.pkjson.dump_pretty(self._input.models)
         return h5
 
     def load_archive(self, h5):
-        # TODO(pjm): init outputs
-        self.output = PKDict(
-            stats=PKDict(),
-            stats_unit=PKDict(),
-            particles=PKDict(),
-        )
+        self._init_output()
+        self._input = self.create_input()
         with h5py.File(h5, "r") as f:
+            self._input.models = pykern.pkjson.load_any(f["/elegant"].attrs["lattice"])
             for c in f["/elegant/stats"]:
                 self.output.stats[c] = f[f"/elegant/stats/{c}"][:]
+                self.output.stats_unit[c] = f[f"/elegant/stats/{c}"].attrs["unitSymbol"]
+                self.output.stats_label[c] = f[f"/elegant/stats/{c}"].attrs["label"]
             if "initial_particles" in f:
                 self.initial_particles = ParticleGroup(h5=f["initial_particles"])
             for p in f["/elegant/particles"]:
@@ -140,11 +142,7 @@ class Elegant(rslume.wrapper.SirepoWrapper):
                     data=pmd_beamphysics.interfaces.elegant.elegant_to_data(str(p)),
                 )
 
-        self.output = PKDict(
-            particles=PKDict(),
-            stats=PKDict(),
-            stats_unit=PKDict(),
-        )
+        self._init_output()
         _particles("final_particles", "run_setup.output.sdds")
         for el in self._input.models.elements:
             if el.type == "WATCH" and el.filename:
@@ -160,7 +158,10 @@ class Elegant(rslume.wrapper.SirepoWrapper):
                 for c in s.column_names:
                     v = sdds_util.extract_sdds_column(str(f), c, 0)
                     self.output.stats[c] = v["values"]
-                    self.output.stats_unit[c] = v.column_def[1]
+                    self.output.stats_unit[c] = ElegantLabel.to_katex(v.column_def[1])
+                    self.output.stats_label[c] = ElegantLabel.to_katex(
+                        v.column_def[0] or c
+                    )
         # TODO(pjm): load warnings and errors from log
 
     def write_initial_particles(self, filename="in.sdds"):
@@ -190,3 +191,96 @@ class Elegant(rslume.wrapper.SirepoWrapper):
         # beam.center_transversely = '1'
         # beam.reverse_t_sign = "1"
         self.cmd("run_setup").expand_for = filename
+
+    def _init_output(self):
+        self.output = PKDict(
+            particles=PKDict(),
+            stats=PKDict(),
+            stats_unit=PKDict(),
+            stats_label=PKDict(),
+        )
+
+
+class ElegantLabel:
+
+    # greek, end-greek, special, end-special
+    _FONTS = set(("g", "r", "s", "e"))
+    _CHARACTERS = PKDict(
+        g=PKDict(
+            a=r"\alpha",
+            b=r"\beta",
+            c=r"\eta",
+            d=r"\delta",
+            e=r"\epsilon",
+            f=r"\varphi",
+            g=r"\gamma",
+            h=r"\chi",
+            i=r"\iota",
+            j=r"\iota",
+            k=r"\kappa",
+            l=r"\lambda",
+            m=r"\mu",
+            n=r"\nu",
+            o=r"\omicron",
+            p=r"\pi",
+            q=r"\vartheta",
+            r=r"\rho",
+            s=r"\sigma",
+            t=r"\tau",
+            u=r"\upsilon",
+            v=r"\chi",
+            w=r"\omega",
+            x=r"\xi",
+            y=r"\psi",
+            z=r"\zeta",
+            F=r"\Phi",
+            Q=r"\Theta",
+        ),
+        # add additional as needed
+        s=PKDict(
+            b="|",
+        ),
+    )
+
+    for c in string.ascii_uppercase:
+        if c not in _CHARACTERS.g:
+            v = _CHARACTERS.g[c.lower()]
+            _CHARACTERS.g[c] = v[0] + v[1].upper() + v[2:]
+
+    _TAGS = PKDict(
+        a="^{",
+        b="_{",
+        n="}",
+    )
+
+    @classmethod
+    def to_katex(cls, value):
+        """Map elegant greek codes to KaTeX equivalent"""
+        res = ""
+        font = "r"
+        is_tag = False
+
+        for c in value:
+            if c == "$":
+                if is_tag:
+                    raise AssertionError("Already within elegant $ tag")
+                is_tag = True
+            elif is_tag:
+                if c in cls._TAGS:
+                    res += cls._TAGS[c]
+                elif c in cls._FONTS:
+                    font = c
+                    if c in ("r", "e"):
+                        res += " "
+                else:
+                    raise AssertionError(f"Unexpected special character: {c}")
+                is_tag = False
+            elif font in cls._CHARACTERS:
+                res += cls._CHARACTERS[font][c]
+            else:
+                res += c
+
+        # simplify single character values
+        res = re.sub(r"\{(.)\}", r"\1", res)
+        res = re.sub(r"'", r"\\prime ", res)
+        return res

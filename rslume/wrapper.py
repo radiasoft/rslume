@@ -19,10 +19,6 @@ class SirepoWrapper(lume.base.CommandWrapper):
     def __init__(self, *args, **kwargs):
         self.sim_type = kwargs["sim_type"]
         self.run_env = kwargs["run_env"]
-        self.update_filenames = kwargs.get("update_filenames", True)
-        if "update_filenames" in kwargs:
-            self.update_filenames = kwargs["update_filenames"]
-            del kwargs["update_filenames"]
         del kwargs["sim_type"]
         del kwargs["run_env"]
         super().__init__(*args, **kwargs)
@@ -36,11 +32,14 @@ class SirepoWrapper(lume.base.CommandWrapper):
     def configure(self):
         self.setup_workdir(self._workdir)
 
-    def input_parser(self, path):
+    def create_input(self):
         return sirepo.lib.Importer(
             self.sim_type,
-            update_filenames=self.update_filenames,
-        ).parse_file(path)
+            update_filenames=True,
+        )
+
+    def input_parser(self, path):
+        return self.create_input().parse_file(path)
 
     def load_archive(self, h5, configure=True):
         raise NotImplementedError("load_archive() not yet implemented.")
