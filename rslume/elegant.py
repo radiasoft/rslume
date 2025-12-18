@@ -75,34 +75,24 @@ class Elegant(rslume.wrapper.SirepoWrapper):
                 break
         self._input.models.beamlines[0]["items"] = r
 
+    def set_watches(self, names):
+        """Clears existing watches and enables the named ones. Converts MARK to WATCH if necessary."""
+        for el in self._input.models.elements:
+            if el.name in names:
+                if el.type == "MARK":
+                    el.type = "WATCH"
+                el.filename = "1"
+            elif el.type == "WATCH":
+                el.type = "MARK"
+
     # --- lume-base implementation ---
 
     def archive(self, h5=None):
 
-        def _initial_particles(filename, group, particle_group):
-            # initial particles get written in two places
-            for g in (group, particle_group):
-                _particle_group_from_sdds(filename, g, "initial_particles")
-
         def _particle_data(group):
             g = group.create_group("particles")
-            if b := self.cmd("sdds_beam", required=False):
-                _initial_particles(b.input, group, g)
-            elif b := self.cmd("bunched_beam", required=False):
-                _initial_particles("bunched_beam.bunch.sdds", group, g)
-            _particle_group_from_sdds("run_setup.output.sdds", g, "final_particles")
-            for el in self._input.models.elements:
-                if el.type == "WATCH" and el.filename:
-                    _particle_group_from_sdds(
-                        f"{el.name}.filename-001.sdds", g, el.name
-                    )
-
-        def _particle_group_from_sdds(filename, parent, name):
-            n = pykern.pkio.py_path(self.path).join(filename)
-            if n.exists():
-                ParticleGroup(
-                    data=pmd_beamphysics.interfaces.elegant.elegant_to_data(str(n))
-                ).write(parent, name)
+            for n in self.output.particles:
+                self.output.particles[n].write(g, n)
 
         def _stat_data(group):
             for c in self.output.stats:
@@ -138,15 +128,20 @@ class Elegant(rslume.wrapper.SirepoWrapper):
         def _particles(name, filename):
             p = pykern.pkio.py_path(self.path).join(filename)
             if p.exists():
-                self.output.particles[name] = ParticleGroup(
-                    data=pmd_beamphysics.interfaces.elegant.elegant_to_data(str(p)),
+                P = ParticleGroup(
+                    data=pmd_beamphysics.interfaces.elegant.elegant_to_data(
+                        # TODO(pjm): use charge at position
+                        str(p),
+                        charge=(
+                            self.output.stats.Charge[-1]
+                            if "Charge" in self.output.stats
+                            else 1
+                        ),
+                    ),
                 )
+                self.output.particles[name] = P
 
         self._init_output()
-        _particles("final_particles", "run_setup.output.sdds")
-        for el in self._input.models.elements:
-            if el.type == "WATCH" and el.filename:
-                _particles(el.name, el.filename.replace("%03ld", "001"))
         for n in (
             "run_setup.centroid.sdds",
             "run_setup.sigma.sdds",
@@ -162,6 +157,16 @@ class Elegant(rslume.wrapper.SirepoWrapper):
                     self.output.stats_label[c] = ElegantLabel.to_katex(
                         v.column_def[0] or c
                     )
+
+        if b := self.cmd("sdds_beam", required=False):
+            _particles("initial_particles", b.input)
+        elif b := self.cmd("bunched_beam", required=False):
+            _particles("initial_particles", "bunched_beam.bunch.sdds")
+        _particles("final_particles", "run_setup.output.sdds")
+        for el in self._input.models.elements:
+            if el.type == "WATCH" and el.filename:
+                # TODO(pjm): use sirepo.lib to get the filename
+                _particles(el.name, f"{el.name}.filename-001.sdds")
         # TODO(pjm): load warnings and errors from log
 
     def write_initial_particles(self, filename="in.sdds"):
