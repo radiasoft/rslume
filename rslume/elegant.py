@@ -29,7 +29,7 @@ class Elegant(rslume.wrapper.SirepoWrapper):
             **kwargs,
         )
 
-    def fix_deprecated_n_kicks(self):
+    def fix_deprecated_elements(self):
         for e in self._input.models.elements:
             if "n_kicks" in e and "n_slices" in e and e.n_kicks != 4:
                 e.n_slices = e.n_kicks
