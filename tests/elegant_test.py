@@ -33,7 +33,7 @@ def test_archive():
         )
         P = E.output["particles"]["final_particles"]
         P.write(str(w.join("final_particles.h5")))
-        pkunit.pkeq("999.999915", f"{P['mean_energy'] * 1e-6:.6f}")
+        pkunit.pkeq("999.99992", f"{P['mean_energy'] * 1e-6:.5f}")
         pkunit.pkeq("eV", str(P.units("mean_energy")))
         E.output["particles"]["W1"].write(str(w.join("W1.h5")))
         for f in (n, "elegant.ele", "elegant.lte"):

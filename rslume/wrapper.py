@@ -9,7 +9,7 @@ import os
 os.environ["SIREPO_FEATURE_CONFIG_SIM_TYPES"] = "elegant:opal"
 
 from pykern import pkio, pksubprocess
-from pykern.pkdebug import pkdlog
+from pykern.pkdebug import pkdlog, pkdp
 import lume.base
 import sirepo.lib
 
@@ -32,14 +32,14 @@ class SirepoWrapper(lume.base.CommandWrapper):
     def configure(self):
         self.setup_workdir(self._workdir)
 
-    def create_input(self):
+    def create_importer(self):
         return sirepo.lib.Importer(
             self.sim_type,
             update_filenames=True,
         )
 
     def input_parser(self, path):
-        return self.create_input().parse_file(path)
+        return self.create_importer().parse_file(path)
 
     def load_archive(self, h5, configure=True):
         raise NotImplementedError("load_archive() not yet implemented.")

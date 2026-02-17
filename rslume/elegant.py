@@ -9,6 +9,7 @@ from pykern.pkdebug import pkdc, pkdexc, pkdlog, pkdp
 from sirepo.template import elegant_common
 from sirepo.template import sdds_util
 import h5py
+import numpy
 import os
 import pmd_beamphysics.interfaces.elegant
 import pykern.pkio
@@ -89,10 +90,18 @@ class Elegant(rslume.wrapper.SirepoWrapper):
 
     def archive(self, h5=None):
 
+        def _input_files(group):
+            p = pykern.pkio.py_path(self.path)
+            for f in self._input.input_filenames():
+                assert p.join(f).exists()
+                with open(str(p.join(f)), "rb") as fo:
+                    group.create_dataset(
+                        f, data=numpy.frombuffer(fo.read(), dtype=numpy.uint8)
+                    )
+
         def _particle_data(group):
-            g = group.create_group("particles")
             for n in self.output.particles:
-                self.output.particles[n].write(g, n)
+                self.output.particles[n].write(group, n)
 
         def _stat_data(group):
             for c in self.output.stats:
@@ -103,26 +112,40 @@ class Elegant(rslume.wrapper.SirepoWrapper):
         assert isinstance(h5, str)
         with h5py.File(h5, "w") as f:
             g = f.create_group("elegant")
-            _stat_data(g.create_group("stats"))
-            _particle_data(g)
-            g.attrs["lattice"] = pykern.pkjson.dump_pretty(self._input.models)
+            o = g.create_group("output")
+            _stat_data(o.create_group("stats"))
+            _particle_data(o.create_group("particles"))
+            i = g.create_group("input")
+            i.attrs["lattice"] = pykern.pkjson.dump_pretty(self._input.models)
+            _input_files(i)
         return h5
 
     def load_archive(self, h5):
+
+        def _write_files(path):
+            assert path, "Path missing"
+            with h5py.File(h5, "r") as f:
+                for n in f["/elegant/input"]:
+                    numpy.array(f[f"/elegant/input/{n}"]).tofile(f"{path}/{n}")
+
         self._init_output()
-        self._input = self.create_input()
+        # TODO(pjm): this is a mock object for now, need to expand it
+        self._input = PKDict()
+        setattr(self._input, "write_files", _write_files)
         with h5py.File(h5, "r") as f:
-            self._input.models = pykern.pkjson.load_any(f["/elegant"].attrs["lattice"])
-            for c in f["/elegant/stats"]:
-                self.output.stats[c] = f[f"/elegant/stats/{c}"][:]
-                self.output.stats_unit[c] = f[f"/elegant/stats/{c}"].attrs["unitSymbol"]
-                self.output.stats_label[c] = f[f"/elegant/stats/{c}"].attrs["label"]
+            self._input.models = pykern.pkjson.load_any(
+                f["/elegant/input"].attrs["lattice"]
+            )
+            g = f["/elegant/output/stats"]
+            for c in g:
+                self.output.stats[c] = g[c][:]
+                self.output.stats_unit[c] = g[c].attrs["unitSymbol"]
+                self.output.stats_label[c] = g[c].attrs["label"]
             if "initial_particles" in f:
                 self.initial_particles = ParticleGroup(h5=f["initial_particles"])
-            for p in f["/elegant/particles"]:
-                self.output.particles[p] = ParticleGroup(
-                    h5=f[f"/elegant/particles/{p}"]
-                )
+            g = f["/elegant/output/particles"]
+            for p in g:
+                self.output.particles[p] = ParticleGroup(h5=g[p])
 
     def load_output(self):
         def _particles(name, filename):
@@ -173,6 +196,7 @@ class Elegant(rslume.wrapper.SirepoWrapper):
         particle_group = self.initial_particles
         if not particle_group:
             return
+        # TODO(pjm): workdir may not be set, check tmpdir
         filepath = os.path.join(self.workdir, filename)
         pmd_beamphysics.interfaces.elegant.write_elegant(
             particle_group,
