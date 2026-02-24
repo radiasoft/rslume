@@ -9,7 +9,7 @@ import os
 os.environ["SIREPO_FEATURE_CONFIG_SIM_TYPES"] = "elegant:opal"
 
 from pykern import pkio, pksubprocess
-from pykern.pkdebug import pkdlog
+from pykern.pkdebug import pkdlog, pkdp
 import lume.base
 import sirepo.lib
 
@@ -19,17 +19,12 @@ class SirepoWrapper(lume.base.CommandWrapper):
     def __init__(self, *args, **kwargs):
         self.sim_type = kwargs["sim_type"]
         self.run_env = kwargs["run_env"]
-        self.update_filenames = kwargs.get("update_filenames", False)
-        if "update_filenames" in kwargs:
-            self.update_filenames = kwargs["update_filenames"]
-            del kwargs["update_filenames"]
         del kwargs["sim_type"]
         del kwargs["run_env"]
         super().__init__(*args, **kwargs)
-        if not self.input_file:
-            raise AssertionError("Missing input_file argument")
-        self.load_input(self.input_file)
-        self.configure()
+        if self.input_file:
+            self.load_input(self.input_file)
+            self.configure()
 
     def archive(self, h5=None):
         raise NotImplementedError("archive() not yet implemented.")
@@ -37,11 +32,14 @@ class SirepoWrapper(lume.base.CommandWrapper):
     def configure(self):
         self.setup_workdir(self._workdir)
 
-    def input_parser(self, path):
+    def create_importer(self):
         return sirepo.lib.Importer(
             self.sim_type,
-            update_filenames=self.update_filenames,
-        ).parse_file(path)
+            update_filenames=True,
+        )
+
+    def input_parser(self, path):
+        return self.create_importer().parse_file(path)
 
     def load_archive(self, h5, configure=True):
         raise NotImplementedError("load_archive() not yet implemented.")
@@ -74,20 +72,35 @@ class SirepoWrapper(lume.base.CommandWrapper):
         )
 
     def el(self, element_name, required=True):
-        return self._find_by_field("elements", "name", element_name, require=required)
+        return self._find_by_field("elements", "name", element_name, required=required)
+
+    def el_for_id(self, element_id):
+        return self._find_by_field("elements", "_id", element_id)
 
     def final_particles(self):
         if "particles" in self.output:
             return self.output["particles"]
         return None
 
-    def _find_by_field(self, container, field, name, count=0, required=True):
+    def max_id(self):
+        max_id = 1
+        for model_type in "elements", "beamlines", "commands":
+            if model_type not in self._input.models:
+                continue
+            for m in self._input.models[model_type]:
+                assert "_id" in m or "id" in m, "Missing id: {}".format(m)
+                i = m._id if "_id" in m else m.id
+                if i > max_id:
+                    max_id = i
+        return max_id
+
+    def _find_by_field(self, container, field, value, count=0, required=True):
         c = 0
         for v in self._input.models[container]:
-            if v[field] == name:
+            if v[field] == value:
                 if c == count:
                     return v
                 c += 1
         if required:
-            raise AssertionError(f"unknown name: {name}")
+            raise AssertionError(f"unknown {field}: {value}")
         return None

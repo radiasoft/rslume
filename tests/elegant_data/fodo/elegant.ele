@@ -1,0 +1,30 @@
+
+
+&run_setup
+  lattice = "elegant.lte",
+  output = "run_setup.output.sdds",
+  p_central_mev = 1000,
+  sigma = "run_setup.sigma.sdds",
+  use_beamline = "FODOcell",
+&end
+
+&run_control
+&end
+
+&twiss_output
+  beta_x = 4,
+  beta_y = 5,
+  filename = "twiss_output.filename.sdds",
+  matched = 0,
+&end
+
+&bunched_beam
+  emit_x = 6e-06,
+  emit_y = 6e-06,
+  limit_in_4d = 1,
+  n_particles_per_bunch = 10,
+  sigma_s = 0.5,
+&end
+
+&track
+&end

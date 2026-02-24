@@ -1,0 +1,8 @@
+"C1": CSBEND,angle=0.349,l=0.5
+"D1": DRIF,l=1
+"D2": DRIF,l=2
+"D3": DRIF,l=0.75
+"QD": QUAD,k1=0.65,l=0.5
+"QF": QUAD,k1=-0.6,l=0.5
+"W1": WATCH,filename="W1.filename-%03ld.sdds"
+"FODOCELL": LINE=("D1","QD","D2","W1","QF","D1")
