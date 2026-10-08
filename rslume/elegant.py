@@ -29,12 +29,28 @@ class Elegant(rslume.wrapper.SirepoWrapper):
             *args,
             **kwargs,
         )
+        self.nprocs = kwargs.get("nprocs", 1)
 
     def fix_deprecated_elements(self):
         for e in self._input.models.elements:
             if "n_kicks" in e and "n_slices" in e and e.n_kicks != 4:
                 e.n_slices = e.n_kicks
                 e.n_kicks = 4
+
+    def get_run_script(self, write_to_path=True):
+        r = super().get_run_script(write_to_path)
+        if self.use_mpi:
+            assert self.nprocs > 1
+            return [
+                "mpiexec",
+                "--bind-to",
+                "none",
+                "-n",
+                str(self.nprocs),
+                self.command_mpi,
+                r[-1],
+            ]
+        return r
 
     def run_twiss_only(self):
         original_commands = self._input.models.commands
@@ -203,6 +219,7 @@ class Elegant(rslume.wrapper.SirepoWrapper):
             filepath,
             verbose=True,
         )
+
         if self.cmd("bunched_beam", required=False):
             for idx, v in enumerate(self._input.models.commands):
                 if v._type == "bunched_beam":
