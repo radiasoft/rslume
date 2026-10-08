@@ -102,6 +102,62 @@ class Elegant(rslume.wrapper.SirepoWrapper):
             elif el.type == "WATCH":
                 el.type = "MARK"
 
+    def fix_deprecated_elements(self):
+        for e in self._input.models.elements:
+            if "n_kicks" in e and "n_slices" in e and e.n_kicks != 4:
+                e.n_slices = e.n_kicks
+                e.n_kicks = 4
+
+    def run_twiss_only(self):
+        original_commands = self._input.models.commands
+        new_commands = []
+        for c in original_commands:
+            if c._type in ("run_setup", "run_control", "twiss_output"):
+                new_commands.append(c.copy())
+        self._input.models.commands = new_commands
+        self.cmd("run_setup").magnets = ""
+        self.run()
+        self._input.models.commands = original_commands
+
+    def slice(self, start_name, end_name=None):
+        def el_id(name):
+            if name is None:
+                return None
+            r = self.el(name)
+            assert r
+            return r._id
+
+        # assuming 1 beamline for now, would need to flatten beamline otherwise
+        assert len(self._input.models.beamlines)
+        start_el = el_id(start_name)
+        assert start_el
+        end_el = el_id(end_name)
+        r = []
+        in_start = False
+        for b in self._input.models.beamlines[0]["items"]:
+            if not in_start:
+                if b == start_el:
+                    in_start = True
+                elif self.el_for_id(b).type == "CHARGE":
+                    # TODO(pjm): certain elements should not get trimmed
+                    pass
+                elif b != start_el:
+                    continue
+            r.append(b)
+            if b == end_el:
+                break
+        self._input.models.beamlines[0]["items"] = r
+
+    def set_watches(self, names):
+        """Clears existing watches and enables the named ones. Converts MARK to WATCH if necessary."""
+        for el in self._input.models.elements:
+            if el.name in names:
+                if el.type == "MARK":
+                    el.type = "WATCH"
+                el.filename = "1"
+            elif el.type == "WATCH":
+                el.type = "MARK"
+
     # --- lume-base implementation ---
 
     def archive(self, h5=None):
