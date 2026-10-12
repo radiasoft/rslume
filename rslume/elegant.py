@@ -3,7 +3,7 @@
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
-from pmd_beamphysics import ParticleGroup
+from beamphysics import ParticleGroup
 from pykern.pkcollections import PKDict
 from pykern.pkdebug import pkdc, pkdexc, pkdlog, pkdp
 from sirepo.template import elegant_common
@@ -11,12 +11,13 @@ from sirepo.template import sdds_util
 import h5py
 import numpy
 import os
-import pmd_beamphysics.interfaces.elegant
+import beamphysics.interfaces.elegant
 import pykern.pkio
 import pykern.pkjson
 import re
 import rslume.wrapper
 import string
+import tempfile
 
 
 class Elegant(rslume.wrapper.SirepoWrapper):
@@ -100,8 +101,23 @@ class Elegant(rslume.wrapper.SirepoWrapper):
                     )
 
         def _particle_data(group):
+            # ParticleGroup.write() only writes the openPMD root attrs
+            # ("openPMD", "basePath", "particlesPath", ...) when given a
+            # path/File -- passed an existing group (as this used to do
+            # directly), it skips them entirely, and beamphysics's reader
+            # now warns on that (and warns again even with those attrs if
+            # the openPMD root isn't the literal file root, which multiple
+            # named bunches sharing this one archive.h5 can't be). So each
+            # bunch gets its own fully compliant single-bunch file, stored
+            # here as a raw byte blob -- the same pattern _input_files()
+            # already uses for embedding whole lattice input files.
             for n in self.output.particles:
-                self.output.particles[n].write(group, n)
+                with tempfile.NamedTemporaryFile(suffix=".h5") as t:
+                    self.output.particles[n].write(t.name)
+                    with open(t.name, "rb") as fo:
+                        group.create_dataset(
+                            n, data=numpy.frombuffer(fo.read(), dtype=numpy.uint8)
+                        )
 
         def _stat_data(group):
             for c in self.output.stats:
@@ -145,14 +161,19 @@ class Elegant(rslume.wrapper.SirepoWrapper):
                 self.initial_particles = ParticleGroup(h5=f["initial_particles"])
             g = f["/elegant/output/particles"]
             for p in g:
-                self.output.particles[p] = ParticleGroup(h5=g[p])
+                # the exact inverse of _particle_data()'s embedding above --
+                # extract the raw bytes back to a standalone file so
+                # ParticleGroup sees a real openPMD root, not a bare group.
+                with tempfile.NamedTemporaryFile(suffix=".h5") as t:
+                    numpy.array(g[p]).tofile(t.name)
+                    self.output.particles[p] = ParticleGroup(h5=t.name)
 
     def load_output(self):
         def _particles(name, filename):
             p = pykern.pkio.py_path(self.path).join(filename)
             if p.exists():
                 P = ParticleGroup(
-                    data=pmd_beamphysics.interfaces.elegant.elegant_to_data(
+                    data=beamphysics.interfaces.elegant.elegant_to_data(
                         # TODO(pjm): use charge at position
                         str(p),
                         charge=(
@@ -198,7 +219,7 @@ class Elegant(rslume.wrapper.SirepoWrapper):
             return
         # TODO(pjm): workdir may not be set, check tmpdir
         filepath = os.path.join(self.workdir, filename)
-        pmd_beamphysics.interfaces.elegant.write_elegant(
+        beamphysics.interfaces.elegant.write_elegant(
             particle_group,
             filepath,
             verbose=True,

@@ -4,12 +4,12 @@
 """
 
 import rslume.wrapper
-from pmd_beamphysics import ParticleGroup
+from beamphysics import ParticleGroup
 from pykern.pkcollections import PKDict
 import h5py
 import numpy
 import os
-import pmd_beamphysics.interfaces.opal
+import beamphysics.interfaces.opal
 
 
 class OPAL(rslume.wrapper.SirepoWrapper):
@@ -38,7 +38,7 @@ class OPAL(rslume.wrapper.SirepoWrapper):
         self.output = {}
         with h5py.File(os.path.join(self.path, "opal.h5"), "r") as f:
             self.output["particles"] = ParticleGroup(
-                data=pmd_beamphysics.interfaces.opal.opal_to_data(
+                data=beamphysics.interfaces.opal.opal_to_data(
                     f[f"/Step#{self._last_data_step(f)}"],
                 ),
             )
@@ -48,7 +48,7 @@ class OPAL(rslume.wrapper.SirepoWrapper):
         if not particle_group:
             return
         filepath = os.path.join(self.workdir, filename)
-        pmd_beamphysics.interfaces.opal.write_opal(
+        beamphysics.interfaces.opal.write_opal(
             particle_group,
             filepath,
             dist_type="emitted",
