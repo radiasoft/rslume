@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<display version="2.0.0">
+  <name>$(CAM)</name>
+  <width>500</width>
+  <height>540</height>
+  <widget type="label" version="2.0.0">
+    <name>Title</name>
+    <text>$(CAM)</text>
+    <x>10</x><y>5</y><width>400</width><height>24</height>
+    <font><font family="Liberation Sans" style="BOLD" size="14.0"/></font>
+  </widget>
+  <widget type="image" version="2.0.0">
+    <name>Image</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(CAM)_image</pv_name>
+    <x>10</x><y>35</y><width>480</width><height>480</height>
+    <autoscale>true</autoscale>
+    <x_axis>
+      <visible>true</visible>
+      <minimum>$(XMIN)</minimum>
+      <maximum>$(XMAX)</maximum>
+      <title>x [mm]</title>
+    </x_axis>
+    <y_axis>
+      <visible>true</visible>
+      <minimum>$(YMIN)</minimum>
+      <maximum>$(YMAX)</maximum>
+      <title>y [mm]</title>
+    </y_axis>
+  </widget>
+</display>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<display version="2.0.0">
+  <name>Quadrupole controls</name>
+  <width>325</width>
+  <height>186</height>
+  <widget type="label" version="2.0.0">
+    <name>Title</name>
+    <text>Quadrupole</text>
+    <x>20</x><y>10</y><width>280</width><height>28</height>
+    <font><font family="Liberation Sans" style="BOLD" size="16.0"/></font>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_K1</name>
+    <text>Strength k1 [1/m^2]</text>
+    <x>20</x><y>50</y><width>160</width><height>25</height>
+  </widget>
+  <widget type="spinner" version="2.0.0">
+    <name>Spinner_K1</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(K1)</pv_name>
+    <x>185</x><y>50</y><width>120</width><height>25</height>
+    <minimum>-5</minimum>
+    <maximum>5</maximum>
+    <limits_from_pv>false</limits_from_pv>
+    <increment>0.05</increment>
+  </widget>
+  <widget type="scaledslider" version="2.0.0">
+    <name>Slider_K1</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(K1)</pv_name>
+    <x>20</x><y>80</y><width>285</width><height>50</height>
+    <minimum>-5</minimum>
+    <maximum>5</maximum>
+    <limits_from_pv>false</limits_from_pv>
+    <increment>0.05</increment>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>RBLabel_K1</name>
+    <text>readback:</text>
+    <x>20</x><y>140</y><width>80</width><height>20</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>RB_K1</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(K1)</pv_name>
+    <x>105</x><y>140</y><width>130</width><height>20</height>
+  </widget>
+</display>

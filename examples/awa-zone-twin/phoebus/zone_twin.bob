@@ -1,0 +1,1037 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<display version="2.0.0">
+  <name>AWA zone1-&gt;zone2 twin</name>
+  <width>1270</width>
+  <height>1006</height>
+  <widget type="label" version="2.0.0">
+    <name>Title</name>
+    <text>AWA zone1 -&gt; zone2 twin (click an element for controls)</text>
+    <x>30</x><y>10</y><width>700</width><height>28</height>
+    <font><font family="Liberation Sans" style="BOLD" size="16.0"/></font>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>StatusLabel</name>
+    <text>Twin:</text>
+    <x>1010</x><y>12</y><width>50</width><height>22</height>
+    <font><font family="Liberation Sans" style="BOLD" size="12.0"/></font>
+  </widget>
+  <widget type="led" version="2.0.0">
+    <name>StatusLed</name>
+    <pv_name>pva://$(P=AWA:SIM:)STATUS</pv_name>
+    <x>1060</x><y>12</y><width>20</width><height>20</height>
+    <off_color><color red="0" green="170" blue="0"/></off_color>
+    <on_color><color red="255" green="150" blue="0"/></on_color>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>StatusText</name>
+    <pv_name>pva://$(P=AWA:SIM:)STATUS</pv_name>
+    <x>1090</x><y>10</y><width>130</width><height>22</height>
+    <precision>3</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>axis</name>
+    <x>30</x><y>159</y><width>1200</width><height>2</height>
+    <background_color><color red="0" green="0" blue="0"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_Gun</name>
+    <actions>
+      <action type="open_display">
+        <file>cavity_controls.bob</file>
+        <macros><PHASE>Gun_phid</PHASE><POWER>Gun_p_actual</POWER></macros>
+        <target>window</target>
+        <description>Gun: PHASE=Gun_phid, POWER=Gun_p_actual</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>20</x><y>125</y><width>20</width><height>70</height>
+    <background_color><color red="220" green="60" blue="60"/></background_color>
+    <tooltip>Gun: PHASE=Gun_phid, POWER=Gun_p_actual</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_Gun</name>
+    <text>Gun</text>
+    <x>14</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_SolBF</name>
+    <actions>
+      <action type="open_display">
+        <file>solenoid_controls.bob</file>
+        <macros><SCALE>SolBF_scale_factor</SCALE><MIN>0</MIN><MAX>0.0003</MAX><INC>1e-06</INC></macros>
+        <target>window</target>
+        <description>SolBF: SCALE=SolBF_scale_factor, MIN=0, MAX=0.0003, INC=1e-06</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>-8</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="60" green="120" blue="220"/></background_color>
+    <tooltip>SolBF: SCALE=SolBF_scale_factor, MIN=0, MAX=0.0003, INC=1e-06</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_SolBF</name>
+    <text>SolBF</text>
+    <x>-14</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_SolM</name>
+    <actions>
+      <action type="open_display">
+        <file>solenoid_controls.bob</file>
+        <macros><SCALE>SolM_scale_factor</SCALE><MIN>0</MIN><MAX>0.0003</MAX><INC>1e-06</INC></macros>
+        <target>window</target>
+        <description>SolM: SCALE=SolM_scale_factor, MIN=0, MAX=0.0003, INC=1e-06</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>25</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="60" green="120" blue="220"/></background_color>
+    <tooltip>SolM: SCALE=SolM_scale_factor, MIN=0, MAX=0.0003, INC=1e-06</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_SolM</name>
+    <text>SolM</text>
+    <x>19</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DT1</name>
+    <actions>
+      <action type="open_display">
+        <file>corrector_controls.bob</file>
+        <macros><H>DT1_hkick</H><V>DT1_vkick</V></macros>
+        <target>window</target>
+        <description>DT1: H=DT1_hkick, V=DT1_vkick</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>72</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <tooltip>DT1: H=DT1_hkick, V=DT1_vkick</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DT1</name>
+    <text>DT1</text>
+    <x>66</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_L1</name>
+    <actions>
+      <action type="open_display">
+        <file>cavity_controls.bob</file>
+        <macros><PHASE>L1_phid</PHASE><POWER>L1_p_actual</POWER></macros>
+        <target>window</target>
+        <description>L1: PHASE=L1_phid, POWER=L1_p_actual</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>58</x><y>125</y><width>20</width><height>70</height>
+    <background_color><color red="220" green="60" blue="60"/></background_color>
+    <tooltip>L1: PHASE=L1_phid, POWER=L1_p_actual</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_L1</name>
+    <text>L1</text>
+    <x>52</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DT2</name>
+    <actions>
+      <action type="open_display">
+        <file>corrector_controls.bob</file>
+        <macros><H>DT2_hkick</H><V>DT2_vkick</V></macros>
+        <target>window</target>
+        <description>DT2: H=DT2_hkick, V=DT2_vkick</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>135</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <tooltip>DT2: H=DT2_hkick, V=DT2_vkick</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DT2</name>
+    <text>DT2</text>
+    <x>129</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_SolL1</name>
+    <actions>
+      <action type="open_display">
+        <file>solenoid_controls.bob</file>
+        <macros><SCALE>SolL1_scale_factor</SCALE><MIN>0</MIN><MAX>6e-07</MAX><INC>2e-09</INC></macros>
+        <target>window</target>
+        <description>SolL1: SCALE=SolL1_scale_factor, MIN=0, MAX=6e-07, INC=2e-09</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>129</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="60" green="120" blue="220"/></background_color>
+    <tooltip>SolL1: SCALE=SolL1_scale_factor, MIN=0, MAX=6e-07, INC=2e-09</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_SolL1</name>
+    <text>SolL1</text>
+    <x>123</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>rect_YAG1</name>
+    <x>221</x><y>130</y><width>4</width><height>60</height>
+    <background_color><color red="0" green="190" blue="120"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_YAG1</name>
+    <text>YAG1</text>
+    <x>215</x><y>65</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_L2</name>
+    <actions>
+      <action type="open_display">
+        <file>cavity_controls.bob</file>
+        <macros><PHASE>L2_phid</PHASE><POWER>L2_p_actual</POWER></macros>
+        <target>window</target>
+        <description>L2: PHASE=L2_phid, POWER=L2_p_actual</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>243</x><y>125</y><width>20</width><height>70</height>
+    <background_color><color red="220" green="60" blue="60"/></background_color>
+    <tooltip>L2: PHASE=L2_phid, POWER=L2_p_actual</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_L2</name>
+    <text>L2</text>
+    <x>237</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DT3</name>
+    <actions>
+      <action type="open_display">
+        <file>corrector_controls.bob</file>
+        <macros><H>DT3_hkick</H><V>DT3_vkick</V></macros>
+        <target>window</target>
+        <description>DT3: H=DT3_hkick, V=DT3_vkick</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>316</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <tooltip>DT3: H=DT3_hkick, V=DT3_vkick</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DT3</name>
+    <text>DT3</text>
+    <x>310</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_SolL2</name>
+    <actions>
+      <action type="open_display">
+        <file>solenoid_controls.bob</file>
+        <macros><SCALE>SolL2_scale_factor</SCALE><MIN>0</MIN><MAX>6e-07</MAX><INC>2e-09</INC></macros>
+        <target>window</target>
+        <description>SolL2: SCALE=SolL2_scale_factor, MIN=0, MAX=6e-07, INC=2e-09</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>303</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="60" green="120" blue="220"/></background_color>
+    <tooltip>SolL2: SCALE=SolL2_scale_factor, MIN=0, MAX=6e-07, INC=2e-09</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_SolL2</name>
+    <text>SolL2</text>
+    <x>297</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_L3</name>
+    <actions>
+      <action type="open_display">
+        <file>cavity_controls.bob</file>
+        <macros><PHASE>L3_phid</PHASE><POWER>L3_p_actual</POWER></macros>
+        <target>window</target>
+        <description>L3: PHASE=L3_phid, POWER=L3_p_actual</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>348</x><y>125</y><width>20</width><height>70</height>
+    <background_color><color red="220" green="60" blue="60"/></background_color>
+    <tooltip>L3: PHASE=L3_phid, POWER=L3_p_actual</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_L3</name>
+    <text>L3</text>
+    <x>342</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>rect_YAG2</name>
+    <x>450</x><y>130</y><width>4</width><height>60</height>
+    <background_color><color red="0" green="190" blue="120"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_YAG2</name>
+    <text>YAG2</text>
+    <x>444</x><y>65</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_SolL4</name>
+    <actions>
+      <action type="open_display">
+        <file>solenoid_controls.bob</file>
+        <macros><SCALE>SolL4_scale_factor</SCALE><MIN>0</MIN><MAX>6e-07</MAX><INC>2e-09</INC></macros>
+        <target>window</target>
+        <description>SolL4: SCALE=SolL4_scale_factor, MIN=0, MAX=6e-07, INC=2e-09</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>422</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="60" green="120" blue="220"/></background_color>
+    <tooltip>SolL4: SCALE=SolL4_scale_factor, MIN=0, MAX=6e-07, INC=2e-09</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_SolL4</name>
+    <text>SolL4</text>
+    <x>416</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DT4</name>
+    <actions>
+      <action type="open_display">
+        <file>corrector_controls.bob</file>
+        <macros><H>DT4_hkick</H><V>DT4_vkick</V></macros>
+        <target>window</target>
+        <description>DT4: H=DT4_hkick, V=DT4_vkick</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>420</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <tooltip>DT4: H=DT4_hkick, V=DT4_vkick</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DT4</name>
+    <text>DT4</text>
+    <x>414</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DT5</name>
+    <actions>
+      <action type="open_display">
+        <file>corrector_controls.bob</file>
+        <macros><H>DT5_hkick</H><V>DT5_vkick</V></macros>
+        <target>window</target>
+        <description>DT5: H=DT5_hkick, V=DT5_vkick</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>500</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <tooltip>DT5: H=DT5_hkick, V=DT5_vkick</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DT5</name>
+    <text>DT5</text>
+    <x>494</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_L4</name>
+    <actions>
+      <action type="open_display">
+        <file>cavity_controls.bob</file>
+        <macros><PHASE>L4_phid</PHASE><POWER>L4_p_actual</POWER></macros>
+        <target>window</target>
+        <description>L4: PHASE=L4_phid, POWER=L4_p_actual</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>492</x><y>125</y><width>20</width><height>70</height>
+    <background_color><color red="220" green="60" blue="60"/></background_color>
+    <tooltip>L4: PHASE=L4_phid, POWER=L4_p_actual</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_L4</name>
+    <text>L4</text>
+    <x>486</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_L5</name>
+    <actions>
+      <action type="open_display">
+        <file>cavity_controls.bob</file>
+        <macros><PHASE>L5_phid</PHASE><POWER>L5_p_actual</POWER></macros>
+        <target>window</target>
+        <description>L5: PHASE=L5_phid, POWER=L5_p_actual</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>582</x><y>125</y><width>20</width><height>70</height>
+    <background_color><color red="220" green="60" blue="60"/></background_color>
+    <tooltip>L5: PHASE=L5_phid, POWER=L5_p_actual</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_L5</name>
+    <text>L5</text>
+    <x>576</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>rect_YAG3</name>
+    <x>668</x><y>130</y><width>4</width><height>60</height>
+    <background_color><color red="0" green="190" blue="120"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_YAG3</name>
+    <text>YAG3</text>
+    <x>662</x><y>65</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DT6</name>
+    <actions>
+      <action type="open_display">
+        <file>corrector_controls.bob</file>
+        <macros><H>DT6_hkick</H><V>DT6_vkick</V></macros>
+        <target>window</target>
+        <description>DT6: H=DT6_hkick, V=DT6_vkick</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>687</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <tooltip>DT6: H=DT6_hkick, V=DT6_vkick</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DT6</name>
+    <text>DT6</text>
+    <x>681</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_L6</name>
+    <actions>
+      <action type="open_display">
+        <file>cavity_controls.bob</file>
+        <macros><PHASE>L6_phid</PHASE><POWER>L6_p_actual</POWER></macros>
+        <target>window</target>
+        <description>L6: PHASE=L6_phid, POWER=L6_p_actual</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>678</x><y>125</y><width>20</width><height>70</height>
+    <background_color><color red="220" green="60" blue="60"/></background_color>
+    <tooltip>L6: PHASE=L6_phid, POWER=L6_p_actual</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_L6</name>
+    <text>L6</text>
+    <x>672</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DT7</name>
+    <actions>
+      <action type="open_display">
+        <file>corrector_controls.bob</file>
+        <macros><H>DT7_hkick</H><V>DT7_vkick</V></macros>
+        <target>window</target>
+        <description>DT7: H=DT7_hkick, V=DT7_vkick</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>776</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <tooltip>DT7: H=DT7_hkick, V=DT7_vkick</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DT7</name>
+    <text>DT7</text>
+    <x>770</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>rect_YAG4</name>
+    <x>793</x><y>130</y><width>4</width><height>60</height>
+    <background_color><color red="0" green="190" blue="120"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_YAG4</name>
+    <text>YAG4</text>
+    <x>787</x><y>65</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DT8</name>
+    <actions>
+      <action type="open_display">
+        <file>corrector_controls.bob</file>
+        <macros><H>DT8_hkick</H><V>DT8_vkick</V></macros>
+        <target>window</target>
+        <description>DT8: H=DT8_hkick, V=DT8_vkick</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>834</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <tooltip>DT8: H=DT8_hkick, V=DT8_vkick</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DT8</name>
+    <text>DT8</text>
+    <x>828</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DQ1</name>
+    <actions>
+      <action type="open_display">
+        <file>quad_controls.bob</file>
+        <macros><K1>DQ1_k1</K1></macros>
+        <target>window</target>
+        <description>DQ1: K1=DQ1_k1</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>850</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="255" green="140" blue="0"/></background_color>
+    <tooltip>DQ1: K1=DQ1_k1</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DQ1</name>
+    <text>DQ1</text>
+    <x>844</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DQ2</name>
+    <actions>
+      <action type="open_display">
+        <file>quad_controls.bob</file>
+        <macros><K1>DQ2_k1</K1></macros>
+        <target>window</target>
+        <description>DQ2: K1=DQ2_k1</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>867</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="255" green="140" blue="0"/></background_color>
+    <tooltip>DQ2: K1=DQ2_k1</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DQ2</name>
+    <text>DQ2</text>
+    <x>861</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DQ3</name>
+    <actions>
+      <action type="open_display">
+        <file>quad_controls.bob</file>
+        <macros><K1>DQ3_k1</K1></macros>
+        <target>window</target>
+        <description>DQ3: K1=DQ3_k1</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>893</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="255" green="140" blue="0"/></background_color>
+    <tooltip>DQ3: K1=DQ3_k1</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DQ3</name>
+    <text>DQ3</text>
+    <x>887</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DT9</name>
+    <actions>
+      <action type="open_display">
+        <file>corrector_controls.bob</file>
+        <macros><H>DT9_hkick</H><V>DT9_vkick</V></macros>
+        <target>window</target>
+        <description>DT9: H=DT9_hkick, V=DT9_vkick</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>908</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <tooltip>DT9: H=DT9_hkick, V=DT9_vkick</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DT9</name>
+    <text>DT9</text>
+    <x>902</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DT10</name>
+    <actions>
+      <action type="open_display">
+        <file>corrector_controls.bob</file>
+        <macros><H>DT10_hkick</H><V>DT10_vkick</V></macros>
+        <target>window</target>
+        <description>DT10: H=DT10_hkick, V=DT10_vkick</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>924</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <tooltip>DT10: H=DT10_hkick, V=DT10_vkick</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DT10</name>
+    <text>DT10</text>
+    <x>918</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DQ4</name>
+    <actions>
+      <action type="open_display">
+        <file>quad_controls.bob</file>
+        <macros><K1>DQ4_k1</K1></macros>
+        <target>window</target>
+        <description>DQ4: K1=DQ4_k1</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>941</x><y>125</y><width>11</width><height>70</height>
+    <background_color><color red="255" green="140" blue="0"/></background_color>
+    <tooltip>DQ4: K1=DQ4_k1</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DQ4</name>
+    <text>DQ4</text>
+    <x>935</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DQ5</name>
+    <actions>
+      <action type="open_display">
+        <file>quad_controls.bob</file>
+        <macros><K1>DQ5_k1</K1></macros>
+        <target>window</target>
+        <description>DQ5: K1=DQ5_k1</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>958</x><y>125</y><width>11</width><height>70</height>
+    <background_color><color red="255" green="140" blue="0"/></background_color>
+    <tooltip>DQ5: K1=DQ5_k1</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DQ5</name>
+    <text>DQ5</text>
+    <x>952</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DQ6</name>
+    <actions>
+      <action type="open_display">
+        <file>quad_controls.bob</file>
+        <macros><K1>DQ6_k1</K1></macros>
+        <target>window</target>
+        <description>DQ6: K1=DQ6_k1</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>975</x><y>125</y><width>11</width><height>70</height>
+    <background_color><color red="255" green="140" blue="0"/></background_color>
+    <tooltip>DQ6: K1=DQ6_k1</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DQ6</name>
+    <text>DQ6</text>
+    <x>969</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DQ7</name>
+    <actions>
+      <action type="open_display">
+        <file>quad_controls.bob</file>
+        <macros><K1>DQ7_k1</K1></macros>
+        <target>window</target>
+        <description>DQ7: K1=DQ7_k1</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>994</x><y>125</y><width>11</width><height>70</height>
+    <background_color><color red="255" green="140" blue="0"/></background_color>
+    <tooltip>DQ7: K1=DQ7_k1</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DQ7</name>
+    <text>DQ7</text>
+    <x>988</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DT12</name>
+    <actions>
+      <action type="open_display">
+        <file>corrector_controls.bob</file>
+        <macros><H>DT12_hkick</H><V>DT12_vkick</V></macros>
+        <target>window</target>
+        <description>DT12: H=DT12_hkick, V=DT12_vkick</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>1113</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <tooltip>DT12: H=DT12_hkick, V=DT12_vkick</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DT12</name>
+    <text>DT12</text>
+    <x>1107</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>rect_YAG5</name>
+    <x>1138</x><y>130</y><width>4</width><height>60</height>
+    <background_color><color red="0" green="190" blue="120"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_YAG5</name>
+    <text>YAG5</text>
+    <x>1132</x><y>65</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DQ8</name>
+    <actions>
+      <action type="open_display">
+        <file>quad_controls.bob</file>
+        <macros><K1>DQ8_k1</K1></macros>
+        <target>window</target>
+        <description>DQ8: K1=DQ8_k1</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>1151</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="255" green="140" blue="0"/></background_color>
+    <tooltip>DQ8: K1=DQ8_k1</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DQ8</name>
+    <text>DQ8</text>
+    <x>1145</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DQ9</name>
+    <actions>
+      <action type="open_display">
+        <file>quad_controls.bob</file>
+        <macros><K1>DQ9_k1</K1></macros>
+        <target>window</target>
+        <description>DQ9: K1=DQ9_k1</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>1175</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="255" green="140" blue="0"/></background_color>
+    <tooltip>DQ9: K1=DQ9_k1</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DQ9</name>
+    <text>DQ9</text>
+    <x>1169</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_ET2</name>
+    <actions>
+      <action type="open_display">
+        <file>corrector_controls.bob</file>
+        <macros><H>ET2_hkick</H><V>ET2_vkick</V></macros>
+        <target>window</target>
+        <description>ET2: H=ET2_hkick, V=ET2_vkick</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>1185</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <tooltip>ET2: H=ET2_hkick, V=ET2_vkick</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_ET2</name>
+    <text>ET2</text>
+    <x>1179</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="action_button" version="3.0.0">
+    <name>btn_DQ10</name>
+    <actions>
+      <action type="open_display">
+        <file>quad_controls.bob</file>
+        <macros><K1>DQ10_k1</K1></macros>
+        <target>window</target>
+        <description>DQ10: K1=DQ10_k1</description>
+      </action>
+    </actions>
+    <text></text>
+    <x>1196</x><y>125</y><width>10</width><height>70</height>
+    <background_color><color red="255" green="140" blue="0"/></background_color>
+    <tooltip>DQ10: K1=DQ10_k1</tooltip>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_DQ10</name>
+    <text>DQ10</text>
+    <x>1190</x><y>60</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>rect_YAG7</name>
+    <x>1226</x><y>130</y><width>4</width><height>60</height>
+    <background_color><color red="0" green="190" blue="120"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>lbl_YAG7</name>
+    <text>YAG7</text>
+    <x>1220</x><y>65</y><width>16</width><height>56</height>
+    <rotation_step>1</rotation_step>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>boundary</name>
+    <x>798</x><y>100</y><width>1</width><height>120</height>
+    <background_color><color red="120" green="120" blue="120"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>BoundaryLabel</name>
+    <text>zone1 | zone2</text>
+    <x>748</x><y>225</y><width>100</width><height>18</height>
+    <font><font family="Liberation Sans" style="REGULAR" size="9"/></font>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>legend_cavity</name>
+    <x>30</x><y>270</y><width>14</width><height>14</height>
+    <background_color><color red="220" green="60" blue="60"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>legend_text_cavity</name>
+    <text>RF cavity (click)</text>
+    <x>50</x><y>270</y><width>160</width><height>16</height>
+    <font><font family="Liberation Sans" style="REGULAR" size="9"/></font>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>legend_solenoid</name>
+    <x>220</x><y>270</y><width>14</width><height>14</height>
+    <background_color><color red="60" green="120" blue="220"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>legend_text_solenoid</name>
+    <text>solenoid (click)</text>
+    <x>240</x><y>270</y><width>160</width><height>16</height>
+    <font><font family="Liberation Sans" style="REGULAR" size="9"/></font>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>legend_corrector</name>
+    <x>410</x><y>270</y><width>14</width><height>14</height>
+    <background_color><color red="200" green="60" blue="200"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>legend_text_corrector</name>
+    <text>corrector (click)</text>
+    <x>430</x><y>270</y><width>160</width><height>16</height>
+    <font><font family="Liberation Sans" style="REGULAR" size="9"/></font>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>legend_quadrupole</name>
+    <x>600</x><y>270</y><width>14</width><height>14</height>
+    <background_color><color red="255" green="140" blue="0"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>legend_text_quadrupole</name>
+    <text>quadrupole (click)</text>
+    <x>620</x><y>270</y><width>160</width><height>16</height>
+    <font><font family="Liberation Sans" style="REGULAR" size="9"/></font>
+  </widget>
+  <widget type="rectangle" version="2.0.0">
+    <name>legend_screen</name>
+    <x>790</x><y>270</y><width>14</width><height>14</height>
+    <background_color><color red="0" green="190" blue="120"/></background_color>
+    <line_width>1</line_width>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>legend_text_screen</name>
+    <text>screen (see tabs below)</text>
+    <x>810</x><y>270</y><width>160</width><height>16</height>
+    <font><font family="Liberation Sans" style="REGULAR" size="9"/></font>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>zone1_DiagHeader</name>
+    <text>Zone 1 exit</text>
+    <x>30</x><y>306</y><width>300</width><height>20</height>
+    <font><font family="Liberation Sans" style="BOLD" size="12.0"/></font>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>zone1_DiagL0</name>
+    <text>Charge [pC]</text>
+    <x>30</x><y>332</y><width>150</width><height>22</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>zone1_DiagV0</name>
+    <pv_name>pva://$(P=AWA:SIM:)zone1_charge_pC</pv_name>
+    <x>185</x><y>332</y><width>110</width><height>22</height>
+    <precision>3</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>zone1_DiagL1</name>
+    <text>Energy [MeV]</text>
+    <x>30</x><y>356</y><width>150</width><height>22</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>zone1_DiagV1</name>
+    <pv_name>pva://$(P=AWA:SIM:)zone1_energy_MeV</pv_name>
+    <x>185</x><y>356</y><width>110</width><height>22</height>
+    <precision>3</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>zone1_DiagL2</name>
+    <text>Energy spread [% rms]</text>
+    <x>30</x><y>380</y><width>150</width><height>22</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>zone1_DiagV2</name>
+    <pv_name>pva://$(P=AWA:SIM:)zone1_energy_spread_pct</pv_name>
+    <x>185</x><y>380</y><width>110</width><height>22</height>
+    <precision>3</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>zone2_DiagHeader</name>
+    <text>Zone 2 exit</text>
+    <x>630</x><y>306</y><width>300</width><height>20</height>
+    <font><font family="Liberation Sans" style="BOLD" size="12.0"/></font>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>zone2_DiagL0</name>
+    <text>Charge [pC]</text>
+    <x>630</x><y>332</y><width>150</width><height>22</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>zone2_DiagV0</name>
+    <pv_name>pva://$(P=AWA:SIM:)zone2_charge_pC</pv_name>
+    <x>785</x><y>332</y><width>110</width><height>22</height>
+    <precision>3</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>zone2_DiagL1</name>
+    <text>Energy [MeV]</text>
+    <x>630</x><y>356</y><width>150</width><height>22</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>zone2_DiagV1</name>
+    <pv_name>pva://$(P=AWA:SIM:)zone2_energy_MeV</pv_name>
+    <x>785</x><y>356</y><width>110</width><height>22</height>
+    <precision>3</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>zone2_DiagL2</name>
+    <text>Energy spread [% rms]</text>
+    <x>630</x><y>380</y><width>150</width><height>22</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>zone2_DiagV2</name>
+    <pv_name>pva://$(P=AWA:SIM:)zone2_energy_spread_pct</pv_name>
+    <x>785</x><y>380</y><width>110</width><height>22</height>
+    <precision>3</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>ScreenTabsHeader</name>
+    <text>Screen images</text>
+    <x>30</x><y>418</y><width>300</width><height>22</height>
+    <font><font family="Liberation Sans" style="BOLD" size="12.0"/></font>
+  </widget>
+  <widget type="navtabs" version="2.0.0">
+    <name>ScreenTabs</name>
+    <tabs>
+      <tab>
+        <name>YAG1</name>
+        <file>screen_view.bob</file>
+        <macros><CAM>YAG1</CAM><XMIN>-5.000</XMIN><XMAX>5.000</XMAX><YMIN>-5.000</YMIN><YMAX>5.000</YMAX></macros>
+        <group_name></group_name>
+      </tab>
+      <tab>
+        <name>YAG2</name>
+        <file>screen_view.bob</file>
+        <macros><CAM>YAG2</CAM><XMIN>-3.000</XMIN><XMAX>3.000</XMAX><YMIN>-3.000</YMIN><YMAX>3.000</YMAX></macros>
+        <group_name></group_name>
+      </tab>
+      <tab>
+        <name>YAG3</name>
+        <file>screen_view.bob</file>
+        <macros><CAM>YAG3</CAM><XMIN>-3.000</XMIN><XMAX>3.000</XMAX><YMIN>-3.000</YMIN><YMAX>3.000</YMAX></macros>
+        <group_name></group_name>
+      </tab>
+      <tab>
+        <name>YAG4</name>
+        <file>screen_view.bob</file>
+        <macros><CAM>YAG4</CAM><XMIN>-3.000</XMIN><XMAX>3.000</XMAX><YMIN>-3.000</YMIN><YMAX>3.000</YMAX></macros>
+        <group_name></group_name>
+      </tab>
+      <tab>
+        <name>YAG5</name>
+        <file>screen_view.bob</file>
+        <macros><CAM>YAG5</CAM><XMIN>-3.000</XMIN><XMAX>3.000</XMAX><YMIN>-3.000</YMIN><YMAX>3.000</YMAX></macros>
+        <group_name></group_name>
+      </tab>
+      <tab>
+        <name>YAG7</name>
+        <file>screen_view.bob</file>
+        <macros><CAM>YAG7</CAM><XMIN>-5.000</XMIN><XMAX>5.000</XMAX><YMIN>-5.000</YMIN><YMAX>5.000</YMAX></macros>
+        <group_name></group_name>
+      </tab>
+    </tabs>
+    <x>30</x><y>446</y><width>640</width><height>540</height>
+    <tab_width>140</tab_width>
+    <tab_height>30</tab_height>
+  </widget>
+</display>

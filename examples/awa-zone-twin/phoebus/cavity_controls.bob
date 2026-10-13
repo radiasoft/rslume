@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<display version="2.0.0">
+  <name>Cavity controls</name>
+  <width>325</width>
+  <height>312</height>
+  <widget type="label" version="2.0.0">
+    <name>Title</name>
+    <text>Cavity</text>
+    <x>20</x><y>10</y><width>280</width><height>28</height>
+    <font><font family="Liberation Sans" style="BOLD" size="16.0"/></font>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_POWER</name>
+    <text>Power scale (P_actual)</text>
+    <x>20</x><y>50</y><width>160</width><height>25</height>
+  </widget>
+  <widget type="spinner" version="2.0.0">
+    <name>Spinner_POWER</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(POWER)</pv_name>
+    <x>185</x><y>50</y><width>120</width><height>25</height>
+    <minimum>0</minimum>
+    <maximum>3</maximum>
+    <limits_from_pv>false</limits_from_pv>
+    <increment>0.01</increment>
+  </widget>
+  <widget type="scaledslider" version="2.0.0">
+    <name>Slider_POWER</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(POWER)</pv_name>
+    <x>20</x><y>80</y><width>285</width><height>50</height>
+    <minimum>0</minimum>
+    <maximum>3</maximum>
+    <limits_from_pv>false</limits_from_pv>
+    <increment>0.01</increment>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>RBLabel_POWER</name>
+    <text>readback:</text>
+    <x>20</x><y>140</y><width>80</width><height>20</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>RB_POWER</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(POWER)</pv_name>
+    <x>105</x><y>140</y><width>130</width><height>20</height>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_PHASE</name>
+    <text>Phase [deg]</text>
+    <x>20</x><y>176</y><width>160</width><height>25</height>
+  </widget>
+  <widget type="spinner" version="2.0.0">
+    <name>Spinner_PHASE</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(PHASE)</pv_name>
+    <x>185</x><y>176</y><width>120</width><height>25</height>
+    <minimum>-180</minimum>
+    <maximum>180</maximum>
+    <limits_from_pv>false</limits_from_pv>
+    <increment>1</increment>
+  </widget>
+  <widget type="scaledslider" version="2.0.0">
+    <name>Slider_PHASE</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(PHASE)</pv_name>
+    <x>20</x><y>206</y><width>285</width><height>50</height>
+    <minimum>-180</minimum>
+    <maximum>180</maximum>
+    <limits_from_pv>false</limits_from_pv>
+    <increment>1</increment>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>RBLabel_PHASE</name>
+    <text>readback:</text>
+    <x>20</x><y>266</y><width>80</width><height>20</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>RB_PHASE</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(PHASE)</pv_name>
+    <x>105</x><y>266</y><width>130</width><height>20</height>
+  </widget>
+</display>

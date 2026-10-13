@@ -18,8 +18,8 @@ _LAZY = {
     "Genesis2": ("rslume.genesis2", "Genesis2"),
     "OPAL": ("rslume.opal", "OPAL"),
     "RfTrack": ("rslume.rftrack", "RfTrack"),
-    "RfTrackReadOnlyScalarVariable": ("rslume.rftrack", "RfTrackReadOnlyScalarVariable"),
-    "RfTrackWritableScalarVariable": ("rslume.rftrack", "RfTrackWritableScalarVariable"),
+    "RfTrackReadOnlyScalarVariable": ("rslume.rftrack_actions", "RfTrackReadOnlyScalarVariable"),
+    "RfTrackWritableScalarVariable": ("rslume.rftrack_actions", "RfTrackWritableScalarVariable"),
 }
 
 
