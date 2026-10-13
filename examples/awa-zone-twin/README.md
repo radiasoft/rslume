@@ -44,9 +44,9 @@ each screen's `<name>_image`, and zone1's `<name>_scale_factor`.
 
 Space charge is zone1 only (zone2 is pure magnetic transport). Neither
 script pins a thread count; `build_chain(threads=...)` sets one (default
-14, capped at the machine's maximum). More threads is not always faster --
-a zone1 build at 2000 particles measured 29 s at 4 threads and 47 s at 16 --
-so try `serve.py --threads`.
+8, capped at the machine's maximum). More threads is not always faster --
+a zone1 build measured 27 s at 6 threads and 36 s at 12 for 2000 particles,
+and 44 s at 8 and 47 s at 12 for 5000 -- so try `serve.py --threads`.
 
 `serving/serve.py` serves the chain's variables as PVs through `lume-pva`:
 both zones' params read-write by default (`--read-only` to lock them),
@@ -71,7 +71,7 @@ picked from the `ScreenTabs` column below the floor plan instead: a
 is an `image` widget on that screen's own `<name>_image` PV: a 64x64
 histogram of the beam there (computed from `get_bunch_at_screens()` after
 every track). The histogram's axis range is each screen's own
-`_SCREEN_FOV_MM` entry in `twin/zone_model.py` -- sized to the beam at
+`SCREEN_FOV_MM` entry in `twin/zone_model.py` -- sized to the beam at
 nominal settings, not the screen's much larger mechanical size (e.g. YAG1
 is mechanically 50.8 mm but its beam is under 1 mm sigma there) -- a large
 enough retune can still outgrow it; regenerate with updated numbers if
@@ -106,17 +106,6 @@ pvget AWA:SIM:STATUS AWA:SIM:SolBF_scale_factor AWA:SIM:zone2_energy_MeV
 
 Expect `Idle`, `0.0001` and about `63` (MeV). `AWA:SIM:STATUS` is `Idle` or
 `Simulating`, and is `Simulating` while the twin re-tracks.
-
-### Run the chain once, without a server
-
-```bash
-cd twin
-python zone1_to_zone2.py
-```
-
-Prints zone1's and zone2's charge/energy; they should agree closely
-(zone2 has no RF cavities, so energy and charge are conserved through it
--- a built-in sanity check of the chain, not just a status report).
 
 ### Open the display in Phoebus
 

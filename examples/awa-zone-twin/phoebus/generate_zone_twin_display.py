@@ -13,7 +13,7 @@ widget on its own `<name>_image` PV (a 2D histogram `Zone1Model`/
 not drawn at all.
 
 Positions and widths come straight from `zone_model`'s own loaded
-`_zone1_module["ELEMENTS"]`/`_zone2_module["ELEMENTS"]` -- the exact
+`ZONE1_MODULE["ELEMENTS"]`/`ZONE2_MODULE["ELEMENTS"]` -- the exact
 generated element tables `zone_model.py` itself builds from (see
 its own module docstring). Each element's
 `elemedge` is each element's *absolute* position for zone1 (a Volume,
@@ -37,16 +37,18 @@ import sys
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from rslume.rftrack_units import UNITS
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "twin"))
 from zone_model import (  # noqa: E402
-    _SCREEN_FOV_MM,
-    _screen_names,
-    _zone1_module,
-    _zone2_module,
+    SCREEN_FOV_MM,
+    screen_names,
+    ZONE1_MODULE,
+    ZONE2_MODULE,
 )
 
-ZONE1_ELEMENTS = _zone1_module["ELEMENTS"]
-ZONE2_ELEMENTS = _zone2_module["ELEMENTS"]
+ZONE1_ELEMENTS = ZONE1_MODULE["ELEMENTS"]
+ZONE2_ELEMENTS = ZONE2_MODULE["ELEMENTS"]
 
 DEFAULT_PREFIX = "AWA:SIM:"  # the PV prefix serve.py uses; the display macro P replaces it
 
@@ -86,9 +88,7 @@ _KIND_GROUP = {
 }
 
 # group -> editor file. The macros each one needs are built per-element
-# by _element_macros() below, not a fixed dict here -- cavity's second
-# field and solenoid's slider range both depend on the specific
-# element, not just its group.
+# by _element_macros() below, not a fixed dict here.
 EDITOR_FILE = {
     "cavity": "cavity_controls.bob",
     "solenoid": "solenoid_controls.bob",
@@ -100,7 +100,8 @@ EDITOR_FILE = {
 def _element_macros(group, e):
     """`{macro: value}` for `e`'s own editor, in `build_model()`'s (or,
     for a solenoid, `Zone1Model`'s own rebuild-based) PV naming
-    convention -- see this file's own module docstring.
+    convention -- see this file's own module docstring. `NAME` is the
+    element's own name, shown in the editor's title.
     """
     name = e.name
     if group == "cavity":
@@ -108,23 +109,13 @@ def _element_macros(group, e):
         # are fieldmap-sourced, so P_actual always applies; an
         # analytic cavity has no live amplitude setter at all (see
         # build_model()'s own docstring) and isn't handled here.
-        return {"PHASE": f"{name}_phid", "POWER": f"{name}_p_actual"}
+        return {"NAME": name, "PHASE": f"{name}_phid", "POWER": f"{name}_p_actual"}
     if group == "solenoid":
-        # scale_factor's own nominal magnitude varies by ~3 orders of
-        # magnitude between solenoids (a bucking/focusing coil vs. a
-        # linac-section coil), so the shared editor's slider range is
-        # macro-driven per instance instead of a fixed constant.
-        nominal = float(e.get("scale_factor", 1.0)) or 1.0
-        return {
-            "SCALE": f"{name}_scale_factor",
-            "MIN": "0",
-            "MAX": f"{3 * abs(nominal):.6g}",
-            "INC": f"{abs(nominal) / 100.0:.6g}",
-        }
+        return {"NAME": name, "SCALE": f"{name}_scale_factor"}
     if group == "corrector":
-        return {"H": f"{name}_hkick", "V": f"{name}_vkick"}
+        return {"NAME": name, "H": f"{name}_hkick", "V": f"{name}_vkick"}
     if group == "quadrupole":
-        return {"K1": f"{name}_k1"}
+        return {"NAME": name, "K1": f"{name}_k1"}
     raise AssertionError(f"unsupported group={group!r}")
 
 
@@ -270,7 +261,7 @@ def _zone1_layout():
             continue
         width = e.get("l") or _DISPLAY_WIDTH_M.get(group, 0.1)
         layout.append((e.elemedge, width, group, e))
-    return layout, float(_zone1_module["SETTINGS"].tracking_range_m[1])
+    return layout, float(ZONE1_MODULE["SETTINGS"].tracking_range_m[1])
 
 
 def _zone2_layout(start_s):
@@ -306,7 +297,7 @@ def _draw_element(d, px_per_m, s_center, width_m, group, e):
         return
     file = EDITOR_FILE[group]
     macros = _element_macros(group, e)
-    tooltip = f"{name}: " + ", ".join(f"{m}={v}" for m, v in macros.items())
+    tooltip = f"{name}: " + ", ".join(f"{m}={v}" for m, v in macros.items() if m != "NAME")
     d.button(f"btn_{name}", x, AXIS_Y - 35, w, 70, COLORS[group], file, macros, tooltip)
     d.label(f"lbl_{name}", name, x - 6, AXIS_Y - 100, 16, 56, rotated=True)
 
@@ -347,9 +338,9 @@ def build() -> str:
         ("quadrupole", "quadrupole (click)"),
         ("screen", "screen (see tabs below)"),
     ]):
-        lx = X0 + i * 190
-        d.rect(f"legend_{group}", lx, ly, 14, 14, COLORS[group])
-        d.label(f"legend_text_{group}", text, lx + 20, ly, 160, 16, size=9)
+        lx = X0 + i * 230
+        d.rect(f"legend_{group}", lx, ly, 20, 20, COLORS[group])
+        d.label(f"legend_text_{group}", text, lx + 28, ly - 2, 195, 24, size=14)
 
     # per-zone diagnostics (readbacks only -- not editable, so no button/popup)
     y = ly + 36
@@ -369,17 +360,17 @@ def build() -> str:
     # embedded display in place rather than opening a new window.
     d.label("ScreenTabsHeader", "Screen images", X0, y, 300, 22, bold=True)
     y += 28
-    screens = _screen_names(ZONE1_ELEMENTS) + _screen_names(ZONE2_ELEMENTS)
+    screens = screen_names(ZONE1_ELEMENTS) + screen_names(ZONE2_ELEMENTS)
     tabs = [
         (
             name,
             "screen_view.bob",
             {
                 "CAM": name,
-                "XMIN": f"{-_SCREEN_FOV_MM[name] / 2:.3f}",
-                "XMAX": f"{_SCREEN_FOV_MM[name] / 2:.3f}",
-                "YMIN": f"{-_SCREEN_FOV_MM[name] / 2:.3f}",
-                "YMAX": f"{_SCREEN_FOV_MM[name] / 2:.3f}",
+                "XMIN": f"{-SCREEN_FOV_MM[name] / 2:.3f}",
+                "XMAX": f"{SCREEN_FOV_MM[name] / 2:.3f}",
+                "YMIN": f"{-SCREEN_FOV_MM[name] / 2:.3f}",
+                "YMAX": f"{SCREEN_FOV_MM[name] / 2:.3f}",
             },
         )
         for name in screens
@@ -401,26 +392,30 @@ def _write_editor_templates(out_dir: Path) -> None:
     pattern -- so the same file serves every device of that kind.
     """
     templates = {
-        # Scale factor's own range varies by ~3 orders of magnitude
-        # between solenoids (see _element_macros()), so min/max/
-        # increment are macros here, set per element by the button
-        # that opens this, not fixed numbers.
+        # The scale factor is ~1e-4, so it is shown and entered in
+        # exponential notation.
         "solenoid_controls.bob": _editor(
-            "Solenoid", [("Field scale factor", "SCALE", "$(MIN)", "$(MAX)", "$(INC)")]
+            "Solenoid", [("Field scale factor", "SCALE", "", "exponential")]
         ),
-        # "Power scale" is RF_Track's own P_actual: a multiplicative
-        # scale on the field-map's own peak amplitude, 1.0 = as
-        # archived -- not an absolute V/m value (build_model() has no
-        # live setter for that; see its own docstring).
+        # POWER is RF_Track's own P_actual, in W: the field amplitude
+        # scales as sqrt(P_actual / P_map). (build_model() has no live
+        # setter for an absolute V/m value; see its own docstring.)
         "cavity_controls.bob": _editor(
             "Cavity",
-            [("Power scale (P_actual)", "POWER", 0, 3, 0.01), ("Phase [deg]", "PHASE", -180, 180, 1)],
+            [
+                ("Power", "POWER", UNITS["p_actual"], "decimal"),
+                ("Phase", "PHASE", UNITS["phid"], "decimal"),
+            ],
         ),
         "corrector_controls.bob": _editor(
-            "Corrector", [("Horizontal [T.mm]", "H", -5, 5, 0.1), ("Vertical [T.mm]", "V", -5, 5, 0.1)]
+            "Corrector",
+            [
+                ("Horizontal", "H", UNITS["hkick"], "decimal"),
+                ("Vertical", "V", UNITS["vkick"], "decimal"),
+            ],
         ),
         "quad_controls.bob": _editor(
-            "Quadrupole", [("Strength k1 [1/m^2]", "K1", -5, 5, 0.05)]
+            "Quadrupole", [("Strength k1", "K1", UNITS["k1"], "decimal")]
         ),
         "screen_view.bob": _screen_view(),
     }
@@ -429,61 +424,63 @@ def _write_editor_templates(out_dir: Path) -> None:
 
 
 def _editor(title: str, fields) -> str:
-    """A small editor `.bob` with, for each `(label, macro, minimum,
-    maximum, increment)` in `fields`, a label, a spinner, a scaled slider
-    and a readback, all on `pva://$(P=AWA:SIM:)$(<macro>)`. `title` names
-    the window; `$(NAME)` (set by the button that opens it) appears in it
-    too.
+    """A small editor `.bob` with, for each `(label, macro, unit, format)`
+    in `fields`, a label, a text entry (it writes the PV once, on Enter,
+    so one edit starts one simulation), its unit, and a readback, all on
+    `pva://$(P=AWA:SIM:)$(<macro>)`. `format` is `"decimal"` or
+    `"exponential"`. `title` names the window; `$(NAME)` (set by the
+    button that opens it) is the element's name and appears in it too.
     """
+    format_index = {"decimal": 1, "exponential": 2}
     y = 50
     widgets = []
-    for label, macro, minimum, maximum, increment in fields:
+    for label, macro, unit, fmt in fields:
+        pv = f"pva://$(P={DEFAULT_PREFIX})$({macro})"
         widgets.append(f"""  <widget type="label" version="2.0.0">
     <name>Label_{macro}</name>
     <text>{escape(label)}</text>
-    <x>20</x><y>{y}</y><width>160</width><height>25</height>
+    <x>20</x><y>{y}</y><width>130</width><height>25</height>
   </widget>
-  <widget type="spinner" version="2.0.0">
-    <name>Spinner_{macro}</name>
-    <pv_name>pva://$(P={DEFAULT_PREFIX})$({macro})</pv_name>
-    <x>185</x><y>{y}</y><width>120</width><height>25</height>
-    <minimum>{minimum}</minimum>
-    <maximum>{maximum}</maximum>
-    <limits_from_pv>false</limits_from_pv>
-    <increment>{increment}</increment>
+  <widget type="textentry" version="3.0.0">
+    <name>Entry_{macro}</name>
+    <pv_name>{pv}</pv_name>
+    <x>155</x><y>{y}</y><width>120</width><height>25</height>
+    <format>{format_index[fmt]}</format>
+    <precision>4</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Unit_{macro}</name>
+    <text>{escape(unit)}</text>
+    <x>280</x><y>{y}</y><width>70</width><height>25</height>
   </widget>""")
         y += 30
-        widgets.append(f"""  <widget type="scaledslider" version="2.0.0">
-    <name>Slider_{macro}</name>
-    <pv_name>pva://$(P={DEFAULT_PREFIX})$({macro})</pv_name>
-    <x>20</x><y>{y}</y><width>285</width><height>50</height>
-    <minimum>{minimum}</minimum>
-    <maximum>{maximum}</maximum>
-    <limits_from_pv>false</limits_from_pv>
-    <increment>{increment}</increment>
-  </widget>""")
-        y += 60
         widgets.append(f"""  <widget type="label" version="2.0.0">
     <name>RBLabel_{macro}</name>
     <text>readback:</text>
-    <x>20</x><y>{y}</y><width>80</width><height>20</height>
+    <x>20</x><y>{y}</y><width>130</width><height>20</height>
   </widget>
   <widget type="textupdate" version="2.0.0">
     <name>RB_{macro}</name>
-    <pv_name>pva://$(P={DEFAULT_PREFIX})$({macro})</pv_name>
-    <x>105</x><y>{y}</y><width>130</width><height>20</height>
+    <pv_name>{pv}</pv_name>
+    <x>155</x><y>{y}</y><width>120</width><height>20</height>
+    <format>{format_index[fmt]}</format>
+    <precision>4</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
   </widget>""")
         y += 36
     body = "\n".join(widgets)
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <display version="2.0.0">
-  <name>{escape(title)} controls</name>
-  <width>325</width>
+  <name>{escape(title)} $(NAME)</name>
+  <width>370</width>
   <height>{y + 10}</height>
   <widget type="label" version="2.0.0">
     <name>Title</name>
-    <text>{escape(title)}</text>
-    <x>20</x><y>10</y><width>280</width><height>28</height>
+    <text>{escape(title)}: $(NAME)</text>
+    <x>20</x><y>10</y><width>330</width><height>28</height>
     <font><font family="Liberation Sans" style="BOLD" size="16.0"/></font>
   </widget>
 {body}

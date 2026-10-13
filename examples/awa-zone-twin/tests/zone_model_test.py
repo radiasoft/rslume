@@ -54,7 +54,7 @@ def test_handoff_keeps_charge_energy_and_bunch_length():
     chain = build_chain(n_particles=_N_PARTICLES, threads=_THREADS)
     zone1, zone2 = chain.lume_model_instances
     chain.set({})
-    names = ("charge_pC", "energy_MeV")
+    names = ("charge_pC", "energy_MeV", "energy_spread_pct")
     for name in names:
         a = zone1.get([f"zone1_{name}"])[f"zone1_{name}"]
         b = zone2.get([f"zone2_{name}"])[f"zone2_{name}"]

@@ -41,7 +41,7 @@
     <actions>
       <action type="open_display">
         <file>cavity_controls.bob</file>
-        <macros><PHASE>Gun_phid</PHASE><POWER>Gun_p_actual</POWER></macros>
+        <macros><NAME>Gun</NAME><PHASE>Gun_phid</PHASE><POWER>Gun_p_actual</POWER></macros>
         <target>window</target>
         <description>Gun: PHASE=Gun_phid, POWER=Gun_p_actual</description>
       </action>
@@ -62,15 +62,15 @@
     <actions>
       <action type="open_display">
         <file>solenoid_controls.bob</file>
-        <macros><SCALE>SolBF_scale_factor</SCALE><MIN>0</MIN><MAX>0.0003</MAX><INC>1e-06</INC></macros>
+        <macros><NAME>SolBF</NAME><SCALE>SolBF_scale_factor</SCALE></macros>
         <target>window</target>
-        <description>SolBF: SCALE=SolBF_scale_factor, MIN=0, MAX=0.0003, INC=1e-06</description>
+        <description>SolBF: SCALE=SolBF_scale_factor</description>
       </action>
     </actions>
     <text></text>
     <x>-8</x><y>125</y><width>10</width><height>70</height>
     <background_color><color red="60" green="120" blue="220"/></background_color>
-    <tooltip>SolBF: SCALE=SolBF_scale_factor, MIN=0, MAX=0.0003, INC=1e-06</tooltip>
+    <tooltip>SolBF: SCALE=SolBF_scale_factor</tooltip>
   </widget>
   <widget type="label" version="2.0.0">
     <name>lbl_SolBF</name>
@@ -83,15 +83,15 @@
     <actions>
       <action type="open_display">
         <file>solenoid_controls.bob</file>
-        <macros><SCALE>SolM_scale_factor</SCALE><MIN>0</MIN><MAX>0.0003</MAX><INC>1e-06</INC></macros>
+        <macros><NAME>SolM</NAME><SCALE>SolM_scale_factor</SCALE></macros>
         <target>window</target>
-        <description>SolM: SCALE=SolM_scale_factor, MIN=0, MAX=0.0003, INC=1e-06</description>
+        <description>SolM: SCALE=SolM_scale_factor</description>
       </action>
     </actions>
     <text></text>
     <x>25</x><y>125</y><width>10</width><height>70</height>
     <background_color><color red="60" green="120" blue="220"/></background_color>
-    <tooltip>SolM: SCALE=SolM_scale_factor, MIN=0, MAX=0.0003, INC=1e-06</tooltip>
+    <tooltip>SolM: SCALE=SolM_scale_factor</tooltip>
   </widget>
   <widget type="label" version="2.0.0">
     <name>lbl_SolM</name>
@@ -104,7 +104,7 @@
     <actions>
       <action type="open_display">
         <file>corrector_controls.bob</file>
-        <macros><H>DT1_hkick</H><V>DT1_vkick</V></macros>
+        <macros><NAME>DT1</NAME><H>DT1_hkick</H><V>DT1_vkick</V></macros>
         <target>window</target>
         <description>DT1: H=DT1_hkick, V=DT1_vkick</description>
       </action>
@@ -125,7 +125,7 @@
     <actions>
       <action type="open_display">
         <file>cavity_controls.bob</file>
-        <macros><PHASE>L1_phid</PHASE><POWER>L1_p_actual</POWER></macros>
+        <macros><NAME>L1</NAME><PHASE>L1_phid</PHASE><POWER>L1_p_actual</POWER></macros>
         <target>window</target>
         <description>L1: PHASE=L1_phid, POWER=L1_p_actual</description>
       </action>
@@ -146,7 +146,7 @@
     <actions>
       <action type="open_display">
         <file>corrector_controls.bob</file>
-        <macros><H>DT2_hkick</H><V>DT2_vkick</V></macros>
+        <macros><NAME>DT2</NAME><H>DT2_hkick</H><V>DT2_vkick</V></macros>
         <target>window</target>
         <description>DT2: H=DT2_hkick, V=DT2_vkick</description>
       </action>
@@ -167,15 +167,15 @@
     <actions>
       <action type="open_display">
         <file>solenoid_controls.bob</file>
-        <macros><SCALE>SolL1_scale_factor</SCALE><MIN>0</MIN><MAX>6e-07</MAX><INC>2e-09</INC></macros>
+        <macros><NAME>SolL1</NAME><SCALE>SolL1_scale_factor</SCALE></macros>
         <target>window</target>
-        <description>SolL1: SCALE=SolL1_scale_factor, MIN=0, MAX=6e-07, INC=2e-09</description>
+        <description>SolL1: SCALE=SolL1_scale_factor</description>
       </action>
     </actions>
     <text></text>
     <x>129</x><y>125</y><width>10</width><height>70</height>
     <background_color><color red="60" green="120" blue="220"/></background_color>
-    <tooltip>SolL1: SCALE=SolL1_scale_factor, MIN=0, MAX=6e-07, INC=2e-09</tooltip>
+    <tooltip>SolL1: SCALE=SolL1_scale_factor</tooltip>
   </widget>
   <widget type="label" version="2.0.0">
     <name>lbl_SolL1</name>
@@ -200,7 +200,7 @@
     <actions>
       <action type="open_display">
         <file>cavity_controls.bob</file>
-        <macros><PHASE>L2_phid</PHASE><POWER>L2_p_actual</POWER></macros>
+        <macros><NAME>L2</NAME><PHASE>L2_phid</PHASE><POWER>L2_p_actual</POWER></macros>
         <target>window</target>
         <description>L2: PHASE=L2_phid, POWER=L2_p_actual</description>
       </action>
@@ -221,7 +221,7 @@
     <actions>
       <action type="open_display">
         <file>corrector_controls.bob</file>
-        <macros><H>DT3_hkick</H><V>DT3_vkick</V></macros>
+        <macros><NAME>DT3</NAME><H>DT3_hkick</H><V>DT3_vkick</V></macros>
         <target>window</target>
         <description>DT3: H=DT3_hkick, V=DT3_vkick</description>
       </action>
@@ -242,15 +242,15 @@
     <actions>
       <action type="open_display">
         <file>solenoid_controls.bob</file>
-        <macros><SCALE>SolL2_scale_factor</SCALE><MIN>0</MIN><MAX>6e-07</MAX><INC>2e-09</INC></macros>
+        <macros><NAME>SolL2</NAME><SCALE>SolL2_scale_factor</SCALE></macros>
         <target>window</target>
-        <description>SolL2: SCALE=SolL2_scale_factor, MIN=0, MAX=6e-07, INC=2e-09</description>
+        <description>SolL2: SCALE=SolL2_scale_factor</description>
       </action>
     </actions>
     <text></text>
     <x>303</x><y>125</y><width>10</width><height>70</height>
     <background_color><color red="60" green="120" blue="220"/></background_color>
-    <tooltip>SolL2: SCALE=SolL2_scale_factor, MIN=0, MAX=6e-07, INC=2e-09</tooltip>
+    <tooltip>SolL2: SCALE=SolL2_scale_factor</tooltip>
   </widget>
   <widget type="label" version="2.0.0">
     <name>lbl_SolL2</name>
@@ -263,7 +263,7 @@
     <actions>
       <action type="open_display">
         <file>cavity_controls.bob</file>
-        <macros><PHASE>L3_phid</PHASE><POWER>L3_p_actual</POWER></macros>
+        <macros><NAME>L3</NAME><PHASE>L3_phid</PHASE><POWER>L3_p_actual</POWER></macros>
         <target>window</target>
         <description>L3: PHASE=L3_phid, POWER=L3_p_actual</description>
       </action>
@@ -296,15 +296,15 @@
     <actions>
       <action type="open_display">
         <file>solenoid_controls.bob</file>
-        <macros><SCALE>SolL4_scale_factor</SCALE><MIN>0</MIN><MAX>6e-07</MAX><INC>2e-09</INC></macros>
+        <macros><NAME>SolL4</NAME><SCALE>SolL4_scale_factor</SCALE></macros>
         <target>window</target>
-        <description>SolL4: SCALE=SolL4_scale_factor, MIN=0, MAX=6e-07, INC=2e-09</description>
+        <description>SolL4: SCALE=SolL4_scale_factor</description>
       </action>
     </actions>
     <text></text>
     <x>422</x><y>125</y><width>10</width><height>70</height>
     <background_color><color red="60" green="120" blue="220"/></background_color>
-    <tooltip>SolL4: SCALE=SolL4_scale_factor, MIN=0, MAX=6e-07, INC=2e-09</tooltip>
+    <tooltip>SolL4: SCALE=SolL4_scale_factor</tooltip>
   </widget>
   <widget type="label" version="2.0.0">
     <name>lbl_SolL4</name>
@@ -317,7 +317,7 @@
     <actions>
       <action type="open_display">
         <file>corrector_controls.bob</file>
-        <macros><H>DT4_hkick</H><V>DT4_vkick</V></macros>
+        <macros><NAME>DT4</NAME><H>DT4_hkick</H><V>DT4_vkick</V></macros>
         <target>window</target>
         <description>DT4: H=DT4_hkick, V=DT4_vkick</description>
       </action>
@@ -338,7 +338,7 @@
     <actions>
       <action type="open_display">
         <file>corrector_controls.bob</file>
-        <macros><H>DT5_hkick</H><V>DT5_vkick</V></macros>
+        <macros><NAME>DT5</NAME><H>DT5_hkick</H><V>DT5_vkick</V></macros>
         <target>window</target>
         <description>DT5: H=DT5_hkick, V=DT5_vkick</description>
       </action>
@@ -359,7 +359,7 @@
     <actions>
       <action type="open_display">
         <file>cavity_controls.bob</file>
-        <macros><PHASE>L4_phid</PHASE><POWER>L4_p_actual</POWER></macros>
+        <macros><NAME>L4</NAME><PHASE>L4_phid</PHASE><POWER>L4_p_actual</POWER></macros>
         <target>window</target>
         <description>L4: PHASE=L4_phid, POWER=L4_p_actual</description>
       </action>
@@ -380,7 +380,7 @@
     <actions>
       <action type="open_display">
         <file>cavity_controls.bob</file>
-        <macros><PHASE>L5_phid</PHASE><POWER>L5_p_actual</POWER></macros>
+        <macros><NAME>L5</NAME><PHASE>L5_phid</PHASE><POWER>L5_p_actual</POWER></macros>
         <target>window</target>
         <description>L5: PHASE=L5_phid, POWER=L5_p_actual</description>
       </action>
@@ -413,7 +413,7 @@
     <actions>
       <action type="open_display">
         <file>corrector_controls.bob</file>
-        <macros><H>DT6_hkick</H><V>DT6_vkick</V></macros>
+        <macros><NAME>DT6</NAME><H>DT6_hkick</H><V>DT6_vkick</V></macros>
         <target>window</target>
         <description>DT6: H=DT6_hkick, V=DT6_vkick</description>
       </action>
@@ -434,7 +434,7 @@
     <actions>
       <action type="open_display">
         <file>cavity_controls.bob</file>
-        <macros><PHASE>L6_phid</PHASE><POWER>L6_p_actual</POWER></macros>
+        <macros><NAME>L6</NAME><PHASE>L6_phid</PHASE><POWER>L6_p_actual</POWER></macros>
         <target>window</target>
         <description>L6: PHASE=L6_phid, POWER=L6_p_actual</description>
       </action>
@@ -455,7 +455,7 @@
     <actions>
       <action type="open_display">
         <file>corrector_controls.bob</file>
-        <macros><H>DT7_hkick</H><V>DT7_vkick</V></macros>
+        <macros><NAME>DT7</NAME><H>DT7_hkick</H><V>DT7_vkick</V></macros>
         <target>window</target>
         <description>DT7: H=DT7_hkick, V=DT7_vkick</description>
       </action>
@@ -488,7 +488,7 @@
     <actions>
       <action type="open_display">
         <file>corrector_controls.bob</file>
-        <macros><H>DT8_hkick</H><V>DT8_vkick</V></macros>
+        <macros><NAME>DT8</NAME><H>DT8_hkick</H><V>DT8_vkick</V></macros>
         <target>window</target>
         <description>DT8: H=DT8_hkick, V=DT8_vkick</description>
       </action>
@@ -509,7 +509,7 @@
     <actions>
       <action type="open_display">
         <file>quad_controls.bob</file>
-        <macros><K1>DQ1_k1</K1></macros>
+        <macros><NAME>DQ1</NAME><K1>DQ1_k1</K1></macros>
         <target>window</target>
         <description>DQ1: K1=DQ1_k1</description>
       </action>
@@ -530,7 +530,7 @@
     <actions>
       <action type="open_display">
         <file>quad_controls.bob</file>
-        <macros><K1>DQ2_k1</K1></macros>
+        <macros><NAME>DQ2</NAME><K1>DQ2_k1</K1></macros>
         <target>window</target>
         <description>DQ2: K1=DQ2_k1</description>
       </action>
@@ -551,7 +551,7 @@
     <actions>
       <action type="open_display">
         <file>quad_controls.bob</file>
-        <macros><K1>DQ3_k1</K1></macros>
+        <macros><NAME>DQ3</NAME><K1>DQ3_k1</K1></macros>
         <target>window</target>
         <description>DQ3: K1=DQ3_k1</description>
       </action>
@@ -572,7 +572,7 @@
     <actions>
       <action type="open_display">
         <file>corrector_controls.bob</file>
-        <macros><H>DT9_hkick</H><V>DT9_vkick</V></macros>
+        <macros><NAME>DT9</NAME><H>DT9_hkick</H><V>DT9_vkick</V></macros>
         <target>window</target>
         <description>DT9: H=DT9_hkick, V=DT9_vkick</description>
       </action>
@@ -593,7 +593,7 @@
     <actions>
       <action type="open_display">
         <file>corrector_controls.bob</file>
-        <macros><H>DT10_hkick</H><V>DT10_vkick</V></macros>
+        <macros><NAME>DT10</NAME><H>DT10_hkick</H><V>DT10_vkick</V></macros>
         <target>window</target>
         <description>DT10: H=DT10_hkick, V=DT10_vkick</description>
       </action>
@@ -614,7 +614,7 @@
     <actions>
       <action type="open_display">
         <file>quad_controls.bob</file>
-        <macros><K1>DQ4_k1</K1></macros>
+        <macros><NAME>DQ4</NAME><K1>DQ4_k1</K1></macros>
         <target>window</target>
         <description>DQ4: K1=DQ4_k1</description>
       </action>
@@ -635,7 +635,7 @@
     <actions>
       <action type="open_display">
         <file>quad_controls.bob</file>
-        <macros><K1>DQ5_k1</K1></macros>
+        <macros><NAME>DQ5</NAME><K1>DQ5_k1</K1></macros>
         <target>window</target>
         <description>DQ5: K1=DQ5_k1</description>
       </action>
@@ -656,7 +656,7 @@
     <actions>
       <action type="open_display">
         <file>quad_controls.bob</file>
-        <macros><K1>DQ6_k1</K1></macros>
+        <macros><NAME>DQ6</NAME><K1>DQ6_k1</K1></macros>
         <target>window</target>
         <description>DQ6: K1=DQ6_k1</description>
       </action>
@@ -677,7 +677,7 @@
     <actions>
       <action type="open_display">
         <file>quad_controls.bob</file>
-        <macros><K1>DQ7_k1</K1></macros>
+        <macros><NAME>DQ7</NAME><K1>DQ7_k1</K1></macros>
         <target>window</target>
         <description>DQ7: K1=DQ7_k1</description>
       </action>
@@ -698,7 +698,7 @@
     <actions>
       <action type="open_display">
         <file>corrector_controls.bob</file>
-        <macros><H>DT12_hkick</H><V>DT12_vkick</V></macros>
+        <macros><NAME>DT12</NAME><H>DT12_hkick</H><V>DT12_vkick</V></macros>
         <target>window</target>
         <description>DT12: H=DT12_hkick, V=DT12_vkick</description>
       </action>
@@ -731,7 +731,7 @@
     <actions>
       <action type="open_display">
         <file>quad_controls.bob</file>
-        <macros><K1>DQ8_k1</K1></macros>
+        <macros><NAME>DQ8</NAME><K1>DQ8_k1</K1></macros>
         <target>window</target>
         <description>DQ8: K1=DQ8_k1</description>
       </action>
@@ -752,7 +752,7 @@
     <actions>
       <action type="open_display">
         <file>quad_controls.bob</file>
-        <macros><K1>DQ9_k1</K1></macros>
+        <macros><NAME>DQ9</NAME><K1>DQ9_k1</K1></macros>
         <target>window</target>
         <description>DQ9: K1=DQ9_k1</description>
       </action>
@@ -773,7 +773,7 @@
     <actions>
       <action type="open_display">
         <file>corrector_controls.bob</file>
-        <macros><H>ET2_hkick</H><V>ET2_vkick</V></macros>
+        <macros><NAME>ET2</NAME><H>ET2_hkick</H><V>ET2_vkick</V></macros>
         <target>window</target>
         <description>ET2: H=ET2_hkick, V=ET2_vkick</description>
       </action>
@@ -794,7 +794,7 @@
     <actions>
       <action type="open_display">
         <file>quad_controls.bob</file>
-        <macros><K1>DQ10_k1</K1></macros>
+        <macros><NAME>DQ10</NAME><K1>DQ10_k1</K1></macros>
         <target>window</target>
         <description>DQ10: K1=DQ10_k1</description>
       </action>
@@ -836,63 +836,63 @@
   </widget>
   <widget type="rectangle" version="2.0.0">
     <name>legend_cavity</name>
-    <x>30</x><y>270</y><width>14</width><height>14</height>
+    <x>30</x><y>270</y><width>20</width><height>20</height>
     <background_color><color red="220" green="60" blue="60"/></background_color>
     <line_width>1</line_width>
   </widget>
   <widget type="label" version="2.0.0">
     <name>legend_text_cavity</name>
     <text>RF cavity (click)</text>
-    <x>50</x><y>270</y><width>160</width><height>16</height>
-    <font><font family="Liberation Sans" style="REGULAR" size="9"/></font>
+    <x>58</x><y>268</y><width>195</width><height>24</height>
+    <font><font family="Liberation Sans" style="REGULAR" size="14"/></font>
   </widget>
   <widget type="rectangle" version="2.0.0">
     <name>legend_solenoid</name>
-    <x>220</x><y>270</y><width>14</width><height>14</height>
+    <x>260</x><y>270</y><width>20</width><height>20</height>
     <background_color><color red="60" green="120" blue="220"/></background_color>
     <line_width>1</line_width>
   </widget>
   <widget type="label" version="2.0.0">
     <name>legend_text_solenoid</name>
     <text>solenoid (click)</text>
-    <x>240</x><y>270</y><width>160</width><height>16</height>
-    <font><font family="Liberation Sans" style="REGULAR" size="9"/></font>
+    <x>288</x><y>268</y><width>195</width><height>24</height>
+    <font><font family="Liberation Sans" style="REGULAR" size="14"/></font>
   </widget>
   <widget type="rectangle" version="2.0.0">
     <name>legend_corrector</name>
-    <x>410</x><y>270</y><width>14</width><height>14</height>
+    <x>490</x><y>270</y><width>20</width><height>20</height>
     <background_color><color red="200" green="60" blue="200"/></background_color>
     <line_width>1</line_width>
   </widget>
   <widget type="label" version="2.0.0">
     <name>legend_text_corrector</name>
     <text>corrector (click)</text>
-    <x>430</x><y>270</y><width>160</width><height>16</height>
-    <font><font family="Liberation Sans" style="REGULAR" size="9"/></font>
+    <x>518</x><y>268</y><width>195</width><height>24</height>
+    <font><font family="Liberation Sans" style="REGULAR" size="14"/></font>
   </widget>
   <widget type="rectangle" version="2.0.0">
     <name>legend_quadrupole</name>
-    <x>600</x><y>270</y><width>14</width><height>14</height>
+    <x>720</x><y>270</y><width>20</width><height>20</height>
     <background_color><color red="255" green="140" blue="0"/></background_color>
     <line_width>1</line_width>
   </widget>
   <widget type="label" version="2.0.0">
     <name>legend_text_quadrupole</name>
     <text>quadrupole (click)</text>
-    <x>620</x><y>270</y><width>160</width><height>16</height>
-    <font><font family="Liberation Sans" style="REGULAR" size="9"/></font>
+    <x>748</x><y>268</y><width>195</width><height>24</height>
+    <font><font family="Liberation Sans" style="REGULAR" size="14"/></font>
   </widget>
   <widget type="rectangle" version="2.0.0">
     <name>legend_screen</name>
-    <x>790</x><y>270</y><width>14</width><height>14</height>
+    <x>950</x><y>270</y><width>20</width><height>20</height>
     <background_color><color red="0" green="190" blue="120"/></background_color>
     <line_width>1</line_width>
   </widget>
   <widget type="label" version="2.0.0">
     <name>legend_text_screen</name>
     <text>screen (see tabs below)</text>
-    <x>810</x><y>270</y><width>160</width><height>16</height>
-    <font><font family="Liberation Sans" style="REGULAR" size="9"/></font>
+    <x>978</x><y>268</y><width>195</width><height>24</height>
+    <font><font family="Liberation Sans" style="REGULAR" size="14"/></font>
   </widget>
   <widget type="label" version="2.0.0">
     <name>zone1_DiagHeader</name>

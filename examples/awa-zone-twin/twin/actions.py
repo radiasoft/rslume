@@ -23,16 +23,16 @@ from lume.variables import NDVariable, ScalarVariable
 
 # Resolution of a screen's served image (AWA's zones have no modeled
 # camera, so this is just a reasonable display resolution).
-_IMAGE_BINS = 64
+IMAGE_BINS = 64
 
 
 class ChargePcVariable(ScalarVariable, ReadOnlyActionMixin):
     """A zone's total tracked charge, in pC (NaN before there's a bunch
-    to measure -- see the owning model's own `_diagnostic_bunch()`).
+    to measure -- see the owning model's own `diagnostic_bunch()`).
     """
 
     def _get(self, model):
-        bunch = model._diagnostic_bunch()
+        bunch = model.diagnostic_bunch()
         if bunch is None:
             return float("nan")
         return abs(bunch.get_total_charge()) / rft.nC * 1000.0
@@ -44,7 +44,7 @@ class EnergyMeVVariable(ScalarVariable, ReadOnlyActionMixin):
     """
 
     def _get(self, model):
-        bunch = model._diagnostic_bunch()
+        bunch = model.diagnostic_bunch()
         if bunch is None:
             return float("nan")
         return bunch.get_info().mean_E
@@ -57,7 +57,7 @@ class EnergySpreadPctVariable(ScalarVariable, ReadOnlyActionMixin):
     """
 
     def _get(self, model):
-        bunch = model._diagnostic_bunch()
+        bunch = model.diagnostic_bunch()
         if bunch is None:
             return float("nan")
         info = bunch.get_info()
@@ -92,10 +92,10 @@ class SolenoidScaleFactorVariable(ScalarVariable, WritableActionMixin):
     solenoid_name: str
 
     def _get(self, model):
-        return model._solenoid_scale_factor[self.solenoid_name]
+        return model.solenoid_scale_factor[self.solenoid_name]
 
     def _set(self, model, value):
-        model._solenoid_scale_factor[self.solenoid_name] = float(value)
+        model.solenoid_scale_factor[self.solenoid_name] = float(value)
 
 
 def diagnostic_variables(prefix):
@@ -118,7 +118,7 @@ def screen_image_variables(screen_names):
         f"{name}_image": ScreenImageVariable(
             name=f"{name}_image",
             screen_name=name,
-            shape=(_IMAGE_BINS, _IMAGE_BINS),
+            shape=(IMAGE_BINS, IMAGE_BINS),
             unit="counts",
             read_only=True,
         )
@@ -128,7 +128,7 @@ def screen_image_variables(screen_names):
 
 def solenoid_scale_factor_variables(solenoid_scale_factor):
     """One `SolenoidScaleFactorVariable` per `{name: current_value}` in
-    `solenoid_scale_factor` (`Zone1Model._solenoid_scale_factor`).
+    `solenoid_scale_factor` (`Zone1Model.solenoid_scale_factor`).
     """
     return {
         f"{name}_scale_factor": SolenoidScaleFactorVariable(

@@ -60,7 +60,7 @@ from rslume.rftrack_utils import (
 )
 
 from actions import (
-    _IMAGE_BINS,
+    IMAGE_BINS,
     SolenoidScaleFactorVariable,
     diagnostic_variables,
     screen_image_variables,
@@ -73,7 +73,9 @@ _SOURCES_DIR = pathlib.Path(__file__).resolve().parent / "sources"
 # (each carries whatever SETTINGS.num_threads its own generating machine
 # happened to have), so `build_chain()` sets one -- capped at
 # rft.max_number_of_threads so it stays valid on a machine with fewer cores.
-_DEFAULT_THREADS = 14
+# 8 is within 8% of the fastest zone1 build at 1000, 2000 and 5000 particles
+# (4-8 threads win; 12 or more is slower).
+_DEFAULT_THREADS = 8
 
 # Each screen's image field of view [mm, full width] -- NOT the mechanical
 # screen size in ELEMENTS (set_aperture's values): at nominal settings the
@@ -82,9 +84,9 @@ _DEFAULT_THREADS = 14
 # full mechanical size is almost entirely empty. These are ~10 sigma at
 # nominal settings (some headroom for retuning before the beam image
 # clips); a large enough retune can still outgrow them -- regenerate with
-# new numbers (print each screen's sigma from a `zone1_to_zone2.py`-style
-# run) if that happens often for your settings.
-_SCREEN_FOV_MM = {
+# new numbers (print each screen's sigma from a tracked chain)
+# if that happens often for your settings.
+SCREEN_FOV_MM = {
     "YAG1": 10.0,
     "YAG2": 6.0,
     "YAG3": 6.0,
@@ -123,8 +125,8 @@ def _load_generated_module(name, lib_dir=None):
 # Read-only views of each generated source (element tables, screen names,
 # variable names) for consumers that only inspect it. `Zone1Model` execs its
 # own copy, because it edits ELEMENTS/BUNCH in place on every rebuild.
-_zone1_module = _load_generated_module("zone1_source", lib_dir=_SOURCES_DIR / "zone1_lib")
-_zone2_module = _load_generated_module("zone2_source")
+ZONE1_MODULE = _load_generated_module("zone1_source", lib_dir=_SOURCES_DIR / "zone1_lib")
+ZONE2_MODULE = _load_generated_module("zone2_source")
 
 
 def _find_spec(elements, name):
@@ -132,10 +134,6 @@ def _find_spec(elements, name):
         if e.name == name:
             return e
     raise KeyError(name)
-
-
-def _screen_names(elements):
-    return [e.name for e in elements if e.kind == "screen"]
 
 
 class Zone1Model(FinalParticlesMixIn, LUMEModel):
@@ -161,12 +159,12 @@ class Zone1Model(FinalParticlesMixIn, LUMEModel):
         )
         rft.rng_set_seed(self._module["BUNCH"].random_seed)
         self._n_particles = n_particles
-        self._screens = _screen_names(self._module["ELEMENTS"])
+        self._screens = screen_names(self._module["ELEMENTS"])
         self._default_scale_factor = {
             name: float(_find_spec(self._module["ELEMENTS"], name).scale_factor)
             for name in self.SOLENOID_NAMES
         }
-        self._solenoid_scale_factor = dict(self._default_scale_factor)
+        self.solenoid_scale_factor = dict(self._default_scale_factor)
         self.model = None
         self.screen_images = {}
         self._rebuild()
@@ -174,6 +172,14 @@ class Zone1Model(FinalParticlesMixIn, LUMEModel):
         self._variables.update(solenoid_scale_factor_variables(self._default_scale_factor))
         self._variables.update(diagnostic_variables("zone1_"))
         self._variables.update(screen_image_variables(self._screens))
+
+    def diagnostic_bunch(self):
+        """The bunch `actions.py`'s diagnostic variables measure --
+        zone1 has no "not ready yet" state of its own (it generates its
+        own cathode bunch, so `tracked_bunch` is `None` only before the
+        very first `track()`, same as `final_particles`).
+        """
+        return self.model.simulator.tracked_bunch
 
     @property
     def final_particles(self):
@@ -186,20 +192,12 @@ class Zone1Model(FinalParticlesMixIn, LUMEModel):
         return bunch6dt_to_particlegroup(bunch)
 
     def reset(self):
-        self._solenoid_scale_factor = dict(self._default_scale_factor)
+        self.solenoid_scale_factor = dict(self._default_scale_factor)
         self._rebuild()
 
     @property
     def supported_variables(self):
         return dict(self._variables)
-
-    def _diagnostic_bunch(self):
-        """The bunch `actions.py`'s diagnostic variables measure --
-        zone1 has no "not ready yet" state of its own (it generates its
-        own cathode bunch, so `tracked_bunch` is `None` only before the
-        very first `track()`, same as `final_particles`).
-        """
-        return self.model.simulator.tracked_bunch
 
     def _get(self, names):
         values = {}
@@ -211,7 +209,7 @@ class Zone1Model(FinalParticlesMixIn, LUMEModel):
         return values
 
     def _rebuild(self):
-        for name, value in self._solenoid_scale_factor.items():
+        for name, value in self.solenoid_scale_factor.items():
             _find_spec(self._module["ELEMENTS"], name).scale_factor = value
         if self._n_particles is not None:
             self._module["BUNCH"].np = self._n_particles
@@ -249,7 +247,7 @@ class Zone1Model(FinalParticlesMixIn, LUMEModel):
 
     def _update_screen_images(self):
         self.screen_images = {
-            f"{name}_image": _screen_image(bunch, _SCREEN_FOV_MM[name])
+            f"{name}_image": _screen_image(bunch, SCREEN_FOV_MM[name])
             for name, bunch in zip(
                 self._screens, self.model.simulator.beamline.get_bunch_at_screens()
             )
@@ -276,18 +274,28 @@ class Zone2Model(InitialParticlesMixIn, LUMEModel):
 
     def __init__(self):
         super().__init__()
-        self._screens = _screen_names(_zone2_module["ELEMENTS"])
+        self._screens = screen_names(ZONE2_MODULE["ELEMENTS"])
         self._has_injected = False
-        self.model = _zone2_module["build_model"](
-            _zone2_module["build_beamline"](), _placeholder_bunch(_zone2_module["BUNCH"])
+        self.model = ZONE2_MODULE["build_model"](
+            ZONE2_MODULE["build_beamline"](), _placeholder_bunch(ZONE2_MODULE["BUNCH"])
         )
         self.model.reset()
         self.screen_images = {
-            f"{name}_image": numpy.zeros((_IMAGE_BINS, _IMAGE_BINS)) for name in self._screens
+            f"{name}_image": numpy.zeros((IMAGE_BINS, IMAGE_BINS)) for name in self._screens
         }
         self._variables = dict(self.model.supported_variables)
         self._variables.update(diagnostic_variables("zone2_"))
         self._variables.update(screen_image_variables(self._screens))
+
+    def diagnostic_bunch(self):
+        """The bunch `actions.py`'s diagnostic variables measure --
+        `None` until zone1 has actually injected one (unlike zone1,
+        whose own `tracked_bunch` is a real signal on its own; zone2's
+        `tracked_bunch` is never `None` once built, even before a real
+        injection, because of its placeholder bunch -- see this class's
+        own docstring).
+        """
+        return self.model.simulator.tracked_bunch if self._has_injected else None
 
     @property
     def initial_particles(self):
@@ -306,28 +314,18 @@ class Zone2Model(InitialParticlesMixIn, LUMEModel):
         self._update_screen_images()
 
     def reset(self):
-        self.model = _zone2_module["build_model"](
-            _zone2_module["build_beamline"](), _placeholder_bunch(_zone2_module["BUNCH"])
+        self.model = ZONE2_MODULE["build_model"](
+            ZONE2_MODULE["build_beamline"](), _placeholder_bunch(ZONE2_MODULE["BUNCH"])
         )
         self.model.reset()
         self._has_injected = False
         self.screen_images = {
-            f"{name}_image": numpy.zeros((_IMAGE_BINS, _IMAGE_BINS)) for name in self._screens
+            f"{name}_image": numpy.zeros((IMAGE_BINS, IMAGE_BINS)) for name in self._screens
         }
 
     @property
     def supported_variables(self):
         return dict(self._variables)
-
-    def _diagnostic_bunch(self):
-        """The bunch `actions.py`'s diagnostic variables measure --
-        `None` until zone1 has actually injected one (unlike zone1,
-        whose own `tracked_bunch` is a real signal on its own; zone2's
-        `tracked_bunch` is never `None` once built, even before a real
-        injection, because of its placeholder bunch -- see this class's
-        own docstring).
-        """
-        return self.model.simulator.tracked_bunch if self._has_injected else None
 
     def _get(self, names):
         values = {}
@@ -348,7 +346,7 @@ class Zone2Model(InitialParticlesMixIn, LUMEModel):
 
     def _update_screen_images(self):
         self.screen_images = {
-            f"{name}_image": _screen_image(bunch, _SCREEN_FOV_MM[name])
+            f"{name}_image": _screen_image(bunch, SCREEN_FOV_MM[name])
             for name, bunch in zip(
                 self._screens, self.model.simulator.beamline.get_bunch_at_screens()
             )
@@ -368,6 +366,10 @@ def build_chain(n_particles=None, threads=None):
     return StagedModel([Zone1Model(n_particles), Zone2Model()])
 
 
+def screen_names(elements):
+    return [e.name for e in elements if e.kind == "screen"]
+
+
 def _placeholder_bunch(bunch_settings):
     """A single macroparticle at `bunch_settings`' own design momentum
     (zero everything else) -- just enough for `build_model()`'s
@@ -382,7 +384,7 @@ def _placeholder_bunch(bunch_settings):
     )
 
 
-def _screen_image(bunch, size_mm, bins=_IMAGE_BINS):
+def _screen_image(bunch, size_mm, bins=IMAGE_BINS):
     """2D histogram of `bunch`'s transverse position in
     `[-size_mm/2, size_mm/2]` on each axis, `bins` x `bins`, as a
     `counts` array. `Bunch6dT` (zone1's screens) needs the uppercase
