@@ -9,12 +9,11 @@ diagnostics (`zone{1,2}_charge_pC`, `zone{1,2}_energy_MeV`,
 `zone{1,2}_energy_spread_pct`). `lume-pva` adds `<prefix>STATUS`,
 `<prefix>RESET` and `<prefix>SNAPSHOT` on top of the model's own variables.
 
-Unlike `docs/htu-twin/serving/serve.py`, there is no archive step and no
-`--include-inputs` flag: both zones are meant to be driven interactively
-here, not served as a fixed,
-previously-recorded source the way the HTU twin's LPA archive is. Pass
-`--read-only` to serve every param read-only instead (e.g. to look at the
-twin without being able to change it).
+There is no archive step and no `--include-inputs` flag: both zones are
+meant to be driven interactively, not served as a fixed,
+previously-recorded source. Pass `--read-only` to serve every param
+read-only instead (e.g. to look at the twin without being able to change
+it).
 
 A put is acknowledged at once by default, before the model has finished
 tracking: Phoebus waits one second for a put reply on its UI thread, and a

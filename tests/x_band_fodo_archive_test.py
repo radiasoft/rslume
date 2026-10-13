@@ -28,7 +28,7 @@ def test_archive_round_trip():
 
     # the archive is plain, self-describing HDF5 -- not something that
     # requires importing this module to read back (that's the whole point:
-    # it's the interchange contract with e.g. Sirepo's rftrack import)
+    # it's the interchange contract with anything that reads it)
     import h5py
 
     with h5py.File(path, "r") as f:

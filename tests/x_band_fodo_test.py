@@ -1,8 +1,6 @@
-"""rslume.rftrack test against a realistic lattice: the "X-band Linac FODO
-Cell" example bundled with Sirepo's rftrack app
-(sirepo/package_data/template/rftrack/examples/x-band-linac-fodo-cell.json),
-rebuilt here directly from RF_Track's native API with that example's own
-element/beam values (one FODO period: D0, C1, C2, QF, C3, C4, QD; analytic
+"""rslume.rftrack test against a realistic lattice: an X-band linac FODO
+cell, built directly from RF_Track's native API
+(one FODO period: D0, C1, C2, QF, C3, C4, QD; analytic
 Pillbox cavities, no field maps, autophase off, space charge off, so this has
 no external data-file dependency).
 
@@ -14,9 +12,8 @@ no external data-file dependency).
 def _build_cavity(rft, name):
     import numpy
 
-    # matches sirepo.template.rftrack._element_spec()'s "cavity_analytic" case:
-    # frequency/gradient/phase come straight from the Sirepo example's CAVITY
-    # elements (C1-C4), all identical: 11.9942 GHz, 80 MV/m, length 0.15 m
+    # analytic cavities C1-C4, all identical: 11.9942 GHz, 80 MV/m,
+    # length 0.15 m
     frequency_hz = 11994200000.0
     gradient_v_per_m = 80e6
     length = 0.15
@@ -57,7 +54,7 @@ def _build_lattice(rft):
 
 
 def _build_bunch(rft):
-    # matches the example's "beam" model: electron, pc=100 MeV/c, Twiss
+    # electron, pc=100 MeV/c, Twiss
     # distribution, beta_x=beta_y=1, emit_x=emit_y=5 mm.mrad normalized
     twiss = rft.Bunch6d_twiss()
     twiss.beta_x = 1.0

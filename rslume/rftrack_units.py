@@ -1,8 +1,8 @@
 """The one canonical RF-Track field/attribute -> unit table
 
 Covers both `rslume.rftrack_archive`'s serialized element fields and the
-live action-variable attributes Sirepo's generated `build_model()`
-exposes (gradient/k1/max_current/angle/hkick/vkick/phid/p_actual), so
+live action-variable attributes (gradient/k1/max_current/angle/hkick/
+vkick/phid/p_actual) exposed as RfTrack action variables, so
 the archive and the served variables can't disagree about a unit.
 Follows `lume-impact`'s pattern (`impact/parsers.py`'s
 `HEADER_UNITS`/`ELE_UNITS`): plain unit strings, used directly as a

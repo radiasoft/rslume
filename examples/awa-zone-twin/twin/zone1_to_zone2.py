@@ -1,7 +1,6 @@
 """Run the zone1->zone2 chain once and print what each zone produced.
 
-Mirrors `docs/htu-twin/twin/lpa_to_twin.py`'s role: a quick sanity check of
-`build_chain()` without Phoebus or lume-pva in the loop. Zone1's own build
+A quick sanity check of `build_chain()` without Phoebus or lume-pva in the loop. Zone1's own build
 (field-map I/O, autophase, and a space-charge-tracked run) takes about a
 minute at the default particle count; this is expected, not a hang.
 """

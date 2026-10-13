@@ -39,8 +39,7 @@ def awa_pv_names(prefix: str = DEFAULT_PREFIX) -> list[str]:
     own rebuild-based solenoid `*_scale_factor` names), then each
     zone's three diagnostics. Deliberately excludes the screens' own
     `*_image` variables -- the archiver is for scalar history, not
-    images (the HTU twin's own archiver setup, if it has one, would
-    face the same split).
+    images.
     """
     names = (
         cheap_variable_names(_zone1_module)

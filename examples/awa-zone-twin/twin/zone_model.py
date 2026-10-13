@@ -1,17 +1,12 @@
-"""LUME models for AWA zone1/zone2, chained the way `lume-fbpic`'s
-`docs/htu-twin/twin/twin_stage.py` chains an LPA run into the HTU twin.
+"""LUME models for AWA zone1/zone2, chained with `lume.staged_model.StagedModel`.
 
-Both zones' physics now come straight from Sirepo's own generated
-scripts for two real, saved sims -- "AWA Zone 1" (run id `0cAtPWsi`) and
-"AWA Zone 2" (run id `5jARuE1D`), both under user `5v93Uhzp` -- copied
-into `sources/zone1_source.py`/`sources/zone2_source.py` (see those files'
-own docstrings and `_load_generated_module()` below). Reusing Sirepo's own generated `build_beamline()`/
-`build_bunch()`/`autophase()`/`apply_space_charge()`/`build_model()`
-means this module doesn't re-derive or risk drifting from the exact
-lattice, bunch, autophase, and space-charge setup Sirepo already
-produces and already gets right (see `sirepo.template.rftrack`'s own
-extensive test coverage of all of that) -- the two generated scripts
-are the single source of truth, and this module is just glue: load
+Both zones' physics come from two generated scripts, "AWA Zone 1" and
+"AWA Zone 2", kept in `sources/zone1_source.py`/`sources/zone2_source.py`
+(see those files' own docstrings and `_load_generated_module()` below).
+Reusing their `build_beamline()`/`build_bunch()`/`autophase()`/
+`apply_space_charge()`/`build_model()` means this module doesn't
+re-derive the lattice, bunch, autophase, and space-charge setup -- the
+two generated scripts are the single source of truth, and this module is just glue: load
 them, chain zone1's output into zone2's input, and expose each one's
 own `build_model()` action variables (plus a few extras, below) as
 `LUMEModel` variables.
@@ -38,9 +33,8 @@ needed to convert it faithfully.
 LUMEModel` subclass, and the existing `bunch6dt_to_particlegroup()`/
 `particlegroup_to_bunch6d()` bridge functions in `rslume.rftrack_utils`
 are exactly the zone1(`Bunch6dT`)-to-zone2(`Bunch6d`) handoff needed --
-no changes needed there, and no lab/bunch-frame conversion or drift
-like the HTU twin's `TwinStage` needs, because
-zone1's tracked output is already the physical handoff state (no
+no changes needed there, and no lab/bunch-frame conversion or drift,
+because zone1's tracked output is already the physical handoff state (no
 intervening change of reference frame between the two zones).
 
 Zone1's rebuild is slow: reading ~10 field-map files from disk,
@@ -83,8 +77,7 @@ _DEFAULT_THREADS = 14
 
 # Each screen's image field of view [mm, full width] -- NOT the mechanical
 # screen size in ELEMENTS (set_aperture's values): at nominal settings the
-# beam is only ~0.1-1.5 mm in sigma there (confirmed empirically against
-# the earlier awa_beamlines-sourced version of this module), tens of times
+# beam is only ~0.1-1.5 mm in sigma there (confirmed empirically), tens of times
 # smaller than the mechanical screen, so an image histogrammed over the
 # full mechanical size is almost entirely empty. These are ~10 sigma at
 # nominal settings (some headroom for retuning before the beam image
@@ -102,7 +95,7 @@ _SCREEN_FOV_MM = {
 
 
 def _load_generated_module(name, lib_dir=None):
-    """Exec `sources/<name>.py` (a Sirepo-generated parameters.py, its
+    """Exec `sources/<name>.py` (a generated parameters.py, its
     trailing auto-run `main()` call already stripped -- see that
     file's own docstring) into a fresh namespace, returning that
     namespace as a plain dict of its top-level names (`ELEMENTS`,
@@ -113,7 +106,7 @@ def _load_generated_module(name, lib_dir=None):
     `lib_dir`, if given, rewrites every element's own field-map `file`
     to an absolute path under it -- the generated script's own `file`
     values are bare basenames, meant to be resolved relative to
-    whatever run directory Sirepo would have copied the lib file into,
+    whatever run directory the lib file would have been copied into,
     not anything this module can rely on as its current working
     directory.
     """
@@ -162,7 +155,7 @@ def cheap_variable_names(module):
 
 
 class Zone1Model(FinalParticlesMixIn, LUMEModel):
-    """AWA zone 1 (sim `0cAtPWsi`) as a `LUMEModel`: the chain's
+    """AWA zone 1 as a `LUMEModel`: the chain's
     upstream, self-sourced stage (it generates its own cathode bunch --
     there is no stage ahead of it to inject one).
     """
@@ -280,13 +273,13 @@ class Zone1Model(FinalParticlesMixIn, LUMEModel):
 
 
 class Zone2Model(InitialParticlesMixIn, LUMEModel):
-    """AWA zone 2 (sim `5jARuE1D`) as a `LUMEModel`: the chain's
+    """AWA zone 2 as a `LUMEModel`: the chain's
     downstream, particle-accepting stage. Every one of its elements
     (quadrupoles, correctors) has a live `build_model()` setter, so
     unlike zone1 this never needs to rebuild the beamline at all.
 
     Its own generated `BUNCH`/`build_bunch()` (a `fromFile`
-    distribution, Sirepo's own saved snapshot of zone1's earlier
+    distribution, a saved snapshot of zone1's earlier
     output) is unused here -- zone1's *live* tracked output is injected
     as `initial_particles` instead. Until the first injection, a
     single-macroparticle placeholder (this zone's own design momentum,
@@ -380,8 +373,7 @@ class Zone2Model(InitialParticlesMixIn, LUMEModel):
 
 def build_chain(n_particles=None, threads=None):
     """`StagedModel([Zone1Model(n_particles), Zone2Model()])`: zone1's
-    tracked bunch becomes zone2's input on every `set()`, the same
-    shape as `docs/htu-twin/twin/twin_stage.py`'s `build_chain()`.
+    tracked bunch becomes zone2's input on every `set()`.
 
     `threads` is RF-Track's thread count for every track (default
     `_DEFAULT_THREADS`, capped at `rft.max_number_of_threads`).
@@ -409,8 +401,7 @@ def _placeholder_bunch(bunch_settings):
 def _screen_image(bunch, size_mm, bins=_IMAGE_BINS):
     """2D histogram of `bunch`'s transverse position in
     `[-size_mm/2, size_mm/2]` on each axis, `bins` x `bins`, as a
-    `counts` array -- the HTU twin's own screen images are the same
-    "counts" unit. `Bunch6dT` (zone1's screens) needs the uppercase
+    `counts` array. `Bunch6dT` (zone1's screens) needs the uppercase
     `%X %Y` field codes; `Bunch6d` (zone2's) needs lowercase `%x %y` --
     confirmed empirically, so this picks the right one from the bunch's
     own class rather than asking the caller to know.

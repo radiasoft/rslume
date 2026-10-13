@@ -614,9 +614,8 @@ def _write_attrs_h5(group, data):
     except a numpy array (e.g. a field map), which goes in as its own
     dataset instead -- an attr isn't meant to hold something that size.
 
-    Mirrors lume-impact's `write_attrs_h5()`/`write_fieldmap_h5()` (the
-    simplest pattern in the LUME ecosystem for this -- lume_fbpic's own `SerializableConfig` machinery is
-    considerably more than these element classes need).
+    Mirrors lume-impact's `write_attrs_h5()`/`write_fieldmap_h5()`, the
+    simplest pattern in the LUME ecosystem for this.
     """
     for k, v in data.items():
         if isinstance(v, numpy.ndarray):

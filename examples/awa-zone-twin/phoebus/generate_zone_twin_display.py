@@ -1,8 +1,7 @@
 """Generate `zone_twin.bob`, a to-scale, clickable synoptic of the AWA
 zone1->zone2 twin served by `serving/serve.py`.
 
-Mirrors `geecs-lume-twin/display/generate_synoptic.py`'s own pattern
-exactly: each element is drawn as a colored button at its real position
+Each element is drawn as a colored button at its real position
 along the beamline; clicking it opens a small, reusable, generic editor
 `.bob` for that device *kind* (`solenoid_controls.bob`,
 `cavity_controls.bob`, `corrector_controls.bob`, `quad_controls.bob`),
@@ -10,15 +9,13 @@ parameterized by macros carrying that element's own served PV names --
 the same file serves every solenoid, cavity, etc., just opened with
 different macro values. A screen opens `screen_view.bob`, an `image`
 widget on its own `<name>_image` PV (a 2D histogram `Zone1Model`/
-`Zone2Model` compute from `get_bunch_at_screens()`), the same pattern
-`camera_view.bob` uses for the HTU twin's own screens. A bare drift is
+`Zone2Model` compute from `get_bunch_at_screens()`). A bare drift is
 not drawn at all.
 
 Positions and widths come straight from `zone_model`'s own loaded
 `_zone1_module["ELEMENTS"]`/`_zone2_module["ELEMENTS"]` -- the exact
-Sirepo-generated element tables `zone_model.py` itself builds from (see
-its own module docstring for why: these are Sirepo's own generated
-`parameters.py` for real saved sims). Sirepo's own
+generated element tables `zone_model.py` itself builds from (see
+its own module docstring). Each element's
 `elemedge` is each element's *absolute* position for zone1 (a Volume,
 placed at arbitrary, even overlapping z) and each element's *start*
 position for zone2 (a Lattice, sequential) -- `l` (when an element has
@@ -72,7 +69,7 @@ COLORS = {
     "screen": (0, 190, 120),
 }
 
-# Sirepo's own per-element `kind` string -> this display's drawing group
+# The generated per-element `kind` string -> this display's drawing group
 # (color/editor). Anything not listed (drift, bpm, rbend, ...) isn't
 # drawn at all -- neither zone uses the ones left out, but the mapping
 # only covers what it needs to, not every kind _build_element() knows.
@@ -302,9 +299,8 @@ def _draw_element(d, px_per_m, s_center, width_m, group, e):
     w = max(int(width_m * px_per_m), 10)
     name = e.name
     if group == "screen":
-        # not clickable -- same as the HTU twin's own floor-plan screens,
-        # which are plain markers too; a screen's image is selected from
-        # the ScreenTabs navtabs strip below, not from the floor plan.
+        # not clickable: a screen's image is selected from the ScreenTabs
+        # navtabs strip below, not from the floor plan.
         d.rect(f"rect_{name}", x, AXIS_Y - 30, 4, 60, COLORS["screen"])
         d.label(f"lbl_{name}", name, x - 6, AXIS_Y - 95, 16, 56, rotated=True)
         return
@@ -368,10 +364,9 @@ def build() -> str:
             d.value(f"{prefix}DiagV{i}", f"{prefix}{field}", x + 155, y + 26 + i * 24, 110)
     y += 26 + 3 * 24 + 14
 
-    # ScreenTabs: a column of tab buttons (navtabs' own VERTICAL default --
-    # the same widget and default the HTU twin's CameraTabs uses) selects
-    # which screen's image is embedded here, replacing the embedded
-    # display in place rather than opening a new window.
+    # ScreenTabs: a column of tab buttons (navtabs' own VERTICAL default)
+    # selects which screen's image is embedded here, replacing the
+    # embedded display in place rather than opening a new window.
     d.label("ScreenTabsHeader", "Screen images", X0, y, 300, 22, bold=True)
     y += 28
     screens = _screen_names(ZONE1_ELEMENTS) + _screen_names(ZONE2_ELEMENTS)
@@ -438,7 +433,7 @@ def _editor(title: str, fields) -> str:
     maximum, increment)` in `fields`, a label, a spinner, a scaled slider
     and a readback, all on `pva://$(P=AWA:SIM:)$(<macro>)`. `title` names
     the window; `$(NAME)` (set by the button that opens it) appears in it
-    too, same as the HTU twin's own editors.
+    too.
     """
     y = 50
     widgets = []
@@ -499,9 +494,7 @@ def _editor(title: str, fields) -> str:
 def _screen_view() -> str:
     """A viewer `.bob` with one `image` widget on
     `pva://$(P=AWA:SIM:)$(CAM)_image`, `$(XMIN)/$(XMAX)/$(YMIN)/$(YMAX)`
-    [mm] axis ranges -- the same shape as the HTU twin's own
-    `camera_view.bob`, just with `P` as a macro (default `AWA:SIM:`)
-    instead of that file's hardcoded `HTU:SIM:`.
+    [mm] axis ranges, with `P` as a macro (default `AWA:SIM:`).
     """
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <display version="2.0.0">

@@ -6,28 +6,24 @@ tracked bunch becomes zone2's source beam. Both zones are served as EPICS
 PVs and watched in Phoebus; changing a zone1 or zone2 parameter re-tracks
 the chain and updates both zones' diagnostics.
 
-Modeled on `lume-fbpic`'s `docs/htu-twin/` demo (an LPA run chained into
-the HTU transport twin), but simpler in one way and different in another:
+Two things define its shape:
 
 - No archive/selector step. RF-Track is fast enough to re-track both zones
-  live on every change; `docs/htu-twin/` needs pre-recorded archives
-  because `fbpic` cannot be re-run inside a Phoebus put's timeout. "Fast
+  live on every change, so nothing needs pre-recording. "Fast
   enough" means zone2 (well under a second); zone1's own run -- field-map
   I/O, autophase, and space charge -- takes tens of seconds, still handled
   live (the put is acknowledged at once and the served values update when
   the track finishes), just not instant.
-- Both zones are live-tunable, not just the downstream one (the HTU demo's
-  LPA source is fixed; its twin is the only interactive side).
+- Both zones are live-tunable, not just the downstream one.
 
 ## How the pieces fit
 
-The physics is two scripts Sirepo generated for saved sims -- "AWA Zone 1"
-(`0cAtPWsi`) and "AWA Zone 2" (`5jARuE1D`) -- kept in `twin/sources/`.
+The physics is two Sirepo-generated scripts -- "AWA Zone 1" and
+"AWA Zone 2" -- kept in `twin/sources/`.
 Each defines `ELEMENTS`, `build_beamline()`, `build_bunch()`, `autophase()`,
 `apply_space_charge()` and `build_model()`; the twin reuses them as they
-are, so the lattice, bunch, autophase and space-charge setup are Sirepo's
-(`twin/zone_model.py` execs them; their `rslume` imports and `unit=`
-arguments are kept in sync with Sirepo's `parameters.py.jinja` by hand).
+are, so the lattice, bunch, autophase and space-charge setup come from
+them (`twin/zone_model.py` execs them).
 
 `twin/zone_model.py`'s `Zone1Model`/`Zone2Model` are `lume.model.LUMEModel`s
 around each script's `build_model()` (an `rslume.rftrack.RfTrack`), which
@@ -57,8 +53,7 @@ both zones' params read-write by default (`--read-only` to lock them),
 each zone's three diagnostics read-only.
 
 `phoebus/generate_zone_twin_display.py` generates a to-scale, clickable
-synoptic (`zone_twin.bob`), the same pattern `geecs-lume-twin/display/
-generate_synoptic.py` uses for the HTU twin: each element is a colored
+synoptic (`zone_twin.bob`): each element is a colored
 button at its real position along the beamline; clicking it opens a
 small, reusable, generic editor (`cavity_controls.bob`,
 `solenoid_controls.bob`, `corrector_controls.bob`, `quad_controls.bob`),
@@ -69,7 +64,7 @@ scripts' own `ELEMENTS` tables (positions, lengths, and which PV each
 element's kind controls).
 
 A screen (YAG1-4, YAG5, YAG7) is drawn on the floor plan but not
-clickable -- same as the HTU twin's own floor-plan screens. Its image is
+clickable. Its image is
 picked from the `ScreenTabs` column below the floor plan instead: a
 `navtabs` widget (one tab per screen) that swaps a single embedded
 `screen_view.bob` in place as you click a different tab. `screen_view.bob`
@@ -164,13 +159,12 @@ To stop, press Ctrl-C in the server terminal and close Phoebus.
 
 ## Record changes with the EPICS Archiver Appliance
 
-A quickstart Archiver Appliance (v2.5.0) is already set up at
-`~/save/twain/epics-archiver` (`run/appliances.xml`; mgmt/engine/etl/
-retrieval BPL all under `http://localhost:8008`). Start it, then register
+The twin assumes a quickstart Archiver Appliance (v2.5.0) with
+mgmt/engine/etl/retrieval BPL all under `http://localhost:8008`. Start it, then register
 the twin's PVs so it starts recording every change:
 
 ```bash
-# from ~/save/twain/epics-archiver, if not already running
+# from the Archiver Appliance directory, if not already running
 ./dist/quickstart-8008.sh -s -d run dist/apache-tomcat-11.0.26.tar.gz
 
 # from this directory, with serve.py already running (see above)

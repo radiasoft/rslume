@@ -1,6 +1,5 @@
 """Action-variable implementations for the AWA zone twin's own extra PVs
--- the ones `build_model()` (sirepo's generated `build_model()`, via
-`rslume.rftrack`) can't cover: zone1's solenoid scale factor (baked in
+-- the ones the generated `build_model()` (via `rslume.rftrack`) can't cover: zone1's solenoid scale factor (baked in
 at construction, no live setter), and each zone's charge/energy/
 energy-spread diagnostics and screen images (derived from the tracked
 bunch, not a single element attribute at all).
@@ -22,9 +21,8 @@ import RF_Track as rft
 from lume.actions import ReadOnlyActionMixin, WritableActionMixin
 from lume.variables import NDVariable, ScalarVariable
 
-# Resolution of a screen's served image (the HTU twin's own screens use its
-# cameras' real pixel counts; AWA's zones have no modeled camera, so this
-# is just a reasonable display resolution).
+# Resolution of a screen's served image (AWA's zones have no modeled
+# camera, so this is just a reasonable display resolution).
 _IMAGE_BINS = 64
 
 

@@ -25,8 +25,7 @@ def test_pvlist_matches_served_scalar_variables():
     # only the served names matter here, not the physics
     chain = build_chain(n_particles=100, threads=1)
     # pvlist.py deliberately excludes the screen _image variables -- the
-    # archiver is for scalar history, not images (the HTU twin's own
-    # archiver setup, if it has one, would face the same split).
+    # archiver is for scalar history, not images.
     served_scalars = {
         DEFAULT_PREFIX + name
         for name in chain.supported_variables
