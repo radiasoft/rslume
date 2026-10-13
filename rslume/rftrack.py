@@ -4,9 +4,9 @@ RF-Track is an in-process Python simulation library with no text-based
 lattice file format, so this builds on ``lume.actions.ActionModel``
 directly: the caller builds a real ``RF_Track.Lattice``/``RF_Track.Volume``
 and initial bunch themselves via RF-Track's native API, then wraps them in
-:class:`rslume.rftrack_simulator.RfTrackSimulator` and a list of
-:class:`rslume.rftrack_actions.RfTrackWritableScalarVariable`/
-:class:`rslume.rftrack_actions.RfTrackReadOnlyScalarVariable` instances
+:class:`rslume.rftrack_simulator.RFTrackSimulator` and a list of
+:class:`rslume.rftrack_actions.RFTrackWritableScalarVariable`/
+:class:`rslume.rftrack_actions.RFTrackReadOnlyScalarVariable` instances
 naming the element attributes to expose.
 
 Element attribute access uses RF-Track's own paired ``get_X()``/``set_X()``
@@ -18,10 +18,10 @@ attributes.
 
 from lume.actions import ActionModel
 
-from rslume.rftrack_simulator import RfTrackSimulator
+from rslume.rftrack_simulator import RFTrackSimulator
 
 
-class RfTrack(ActionModel[RfTrackSimulator]):
+class LUMERFTrackModel(ActionModel[RFTrackSimulator]):
     """LUME model for RF-Track.
 
     Every `set()` re-tracks the whole beamline eagerly (RF-Track tracking
@@ -32,8 +32,8 @@ class RfTrack(ActionModel[RfTrackSimulator]):
     def reset(self):
         # Not using ActionModel's inherited reset(): it decides what to
         # reset via `isinstance(av, WritableActionMixin)`, but
-        # rftrack_actions.RfTrackReadOnlyActionMixin also inherits from
-        # RfTrackWritableActionMixin (to reuse its _get), so a read-only
+        # rftrack_actions.RFTrackReadOnlyActionMixin also inherits from
+        # RFTrackWritableActionMixin (to reuse its _get), so a read-only
         # variable would incorrectly be included and hit ReadOnlyError.
         self._set(
             {

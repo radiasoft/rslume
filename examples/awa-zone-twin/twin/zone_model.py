@@ -28,7 +28,7 @@ scales linearly with it), not a fabricated Amps value -- the archived
 sim alone doesn't carry the coil's own current-to-field calibration
 needed to convert it faithfully.
 
-`lume.actions.ActionModel` (what `rslume.rftrack.RfTrack` -- what
+`lume.actions.ActionModel` (what `rslume.rftrack.LUMERFTrackModel` -- what
 `build_model()` returns -- is built on) is already a `lume.model.
 LUMEModel` subclass, and the existing `bunch6dt_to_particlegroup()`/
 `particlegroup_to_bunch6d()` bridge functions in `rslume.rftrack_utils`
@@ -339,7 +339,7 @@ class Zone2Model(InitialParticlesMixIn, LUMEModel):
     def _set(self, values):
         # Always safe: simulator.initial_bunch is the real injected
         # bunch once there is one, or the placeholder until then --
-        # never None -- so RfTrack._set()'s own re-track never crashes.
+        # never None -- so LUMERFTrackModel._set()'s own re-track never crashes.
         self.model.set(values)
         if self._has_injected:
             self._update_screen_images()

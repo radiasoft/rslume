@@ -60,7 +60,7 @@ def test_archive_round_trip():
     import numpy
     import RF_Track as rft
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
 
     w = pkunit.empty_work_dir()
     path = str(w.join("solenoid.h5"))
@@ -82,17 +82,17 @@ def test_archive_round_trip():
     twiss.sigma_pt = 1.0
     bunch = rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 10.0, twiss, 50)
 
-    original = RfTrackSimulator(v, bunch)
+    original = RFTrackSimulator(v, bunch)
     original.archive(path)
 
     with h5py.File(path, "r") as f:
         pkunit.pkeq("Static_Magnetic_FieldMap_1d", f["elements"]["0"].attrs["class"])
         # a shared "field_maps" dataset, referenced by "@<md5>" --
-        # see RfTrackSimulator.archive()'s own docstring
+        # see RFTrackSimulator.archive()'s own docstring
         bz_ref = f["elements"]["0"].attrs["bz"]
         bz_archived = f["field_maps"][bz_ref[1:]][()]
 
-    reloaded = RfTrackSimulator()
+    reloaded = RFTrackSimulator()
     reloaded.load_archive(path)
 
     z0, z1 = sol.get_z0(), sol.get_z1()

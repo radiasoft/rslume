@@ -1,4 +1,4 @@
-"""rslume.rftrack_simulator.RfTrackSimulator.archive()/load_archive() round-trip test,
+"""rslume.rftrack_simulator.RFTrackSimulator.archive()/load_archive() round-trip test,
 against the same "X-band Linac FODO Cell" lattice used by x_band_fodo_test.py.
 
 :copyright: Copyright (c) 2026 RadiaSoft LLC.  All Rights Reserved.
@@ -15,14 +15,14 @@ def _relative_diff(a, b):
 def test_archive_round_trip():
     import RF_Track as rft
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
     from x_band_fodo_test import _build_bunch, _build_lattice
 
     w = pkunit.empty_work_dir()
     path = str(w.join("archive.h5"))
 
     rft.rng_set_seed(_RANDOM_SEED)
-    original = RfTrackSimulator(_build_lattice(rft), _build_bunch(rft))
+    original = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))
     original.track()
     original.archive(path)
 
@@ -45,7 +45,7 @@ def test_archive_round_trip():
     # load_archive() fills in an otherwise-empty simulator, same calling
     # convention as rslume.elegant.Elegant()/load_archive() (and
     # lume.base.Base's in general)
-    reloaded = RfTrackSimulator()
+    reloaded = RFTrackSimulator()
     reloaded.load_archive(path)
     reloaded.track()
 

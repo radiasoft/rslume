@@ -70,32 +70,32 @@ def _build_bunch(rft):
 
 def _build_model():
     import RF_Track as rft
-    from rslume.rftrack import RfTrack
-    from rslume.rftrack_actions import RfTrackWritableScalarVariable
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack import LUMERFTrackModel
+    from rslume.rftrack_actions import RFTrackWritableScalarVariable
+    from rslume.rftrack_simulator import RFTrackSimulator
 
-    simulator = RfTrackSimulator(_build_lattice(rft), _build_bunch(rft))
+    simulator = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))
     variables = [
-        RfTrackWritableScalarVariable(
+        RFTrackWritableScalarVariable(
             name="QF_gradient",
             element_name="QF",
             attribute="gradient",
             default_value=5.0,
         ),
-        RfTrackWritableScalarVariable(
+        RFTrackWritableScalarVariable(
             name="QD_gradient",
             element_name="QD",
             attribute="gradient",
             default_value=-5.0,
         ),
-        RfTrackWritableScalarVariable(
+        RFTrackWritableScalarVariable(
             name="C1_phid",
             element_name="C1",
             attribute="phid",
             default_value=0.0,
         ),
     ]
-    return RfTrack(simulator=simulator, action_variables=variables)
+    return LUMERFTrackModel(simulator=simulator, action_variables=variables)
 
 
 _MODEL = None

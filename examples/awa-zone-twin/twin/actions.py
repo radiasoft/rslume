@@ -6,7 +6,7 @@ screen images (derived from the tracked bunch, not a single element
 attribute at all).
 
 `rslume.rftrack_actions`'s own action classes
-(`RfTrackWritableScalarVariable` etc.) are the generic layer; these are
+(`RFTrackWritableScalarVariable` etc.) are the generic layer; these are
 the AWA-twin-specific one.
 
 Each variable's `_get`/`_set` here takes the

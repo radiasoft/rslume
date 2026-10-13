@@ -1,6 +1,6 @@
 """HDF5 archive format for rslume.rftrack
 
-`RfTrackSimulator.archive()`/`load_archive()` (`rslume.rftrack_simulator`)
+`RFTrackSimulator.archive()`/`load_archive()` (`rslume.rftrack_simulator`)
 delegate to :func:`archive`/:func:`load_archive` here: this module holds the
 actual beamline + bunch <-> HDF5 serialization, covering only the
 element classes :data:`_ELEMENT_SERIALIZERS` knows about -- not a
@@ -38,7 +38,7 @@ _CAVITY_CLASSES = frozenset(("Pillbox_Cavity", "RF_FieldMap_1d", "RF_FieldMap_2d
 
 def archive(simulator, path, autophase=None, space_charge=None):
     """Write `simulator.beamline` and `simulator.initial_bunch` to `path`
-    as HDF5 (called as `RfTrackSimulator.archive()`).
+    as HDF5 (called as `RFTrackSimulator.archive()`).
 
     `autophase` (bool) and `space_charge` (a dict, see below, or
     `None` for no space charge) record simulation-level settings
@@ -181,7 +181,7 @@ def archive(simulator, path, autophase=None, space_charge=None):
 def load_archive(simulator, path):
     """Replace `simulator.beamline` and `simulator.initial_bunch` with the
     contents of `path` (as written by `archive()`; called as
-    `RfTrackSimulator.load_archive()`), rebuilding a new `rft.Lattice`
+    `RFTrackSimulator.load_archive()`), rebuilding a new `rft.Lattice`
     or `rft.Volume` and the exact same macroparticles `archive()`
     wrote (see its own docstring). Clears `simulator.tracked_bunch`.
 

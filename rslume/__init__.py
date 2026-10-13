@@ -3,10 +3,10 @@ import importlib
 __all__ = [
     "Elegant",
     "Genesis2",
+    "LUMERFTrackModel",
     "OPAL",
-    "RfTrack",
-    "RfTrackReadOnlyScalarVariable",
-    "RfTrackWritableScalarVariable",
+    "RFTrackReadOnlyScalarVariable",
+    "RFTrackWritableScalarVariable",
 ]
 
 # Each wrapper is imported lazily (PEP 562) so that one wrapper's broken or
@@ -16,10 +16,10 @@ __all__ = [
 _LAZY = {
     "Elegant": ("rslume.elegant", "Elegant"),
     "Genesis2": ("rslume.genesis2", "Genesis2"),
+    "LUMERFTrackModel": ("rslume.rftrack", "LUMERFTrackModel"),
     "OPAL": ("rslume.opal", "OPAL"),
-    "RfTrack": ("rslume.rftrack", "RfTrack"),
-    "RfTrackReadOnlyScalarVariable": ("rslume.rftrack_actions", "RfTrackReadOnlyScalarVariable"),
-    "RfTrackWritableScalarVariable": ("rslume.rftrack_actions", "RfTrackWritableScalarVariable"),
+    "RFTrackReadOnlyScalarVariable": ("rslume.rftrack_actions", "RFTrackReadOnlyScalarVariable"),
+    "RFTrackWritableScalarVariable": ("rslume.rftrack_actions", "RFTrackWritableScalarVariable"),
 }
 
 

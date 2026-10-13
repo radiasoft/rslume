@@ -1,4 +1,4 @@
-"""RfTrackSimulator.archive()/load_archive() field-map deduplication:
+"""RFTrackSimulator.archive()/load_archive() field-map deduplication:
 several elements built from the same field-map array (e.g. a linac's
 identical accelerating cavities, all from one uploaded file) should be
 archived with one shared copy, not a byte-for-byte duplicate per element.
@@ -45,13 +45,13 @@ def test_field_map_dedup():
     import numpy
     import RF_Track as rft
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
 
     w = pkunit.empty_work_dir()
     path = str(w.join("archive.h5"))
 
     rft.rng_set_seed(_RANDOM_SEED)
-    original = RfTrackSimulator(_build_volume(rft, numpy), _build_bunch(rft))
+    original = RFTrackSimulator(_build_volume(rft, numpy), _build_bunch(rft))
     original.archive(path)
 
     with h5py.File(path, "r") as f:
@@ -61,7 +61,7 @@ def test_field_map_dedup():
         pkunit.pkeq(3, len(refs))
         pkunit.pkeq(1, len({v for v in refs.values()}), "all three should reference the same array")
 
-    reloaded = RfTrackSimulator()
+    reloaded = RFTrackSimulator()
     reloaded.load_archive(path)
     pkunit.pkeq(3, reloaded.beamline.size())
     for i in range(3):

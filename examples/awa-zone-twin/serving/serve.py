@@ -101,12 +101,12 @@ def main(argv: list[str] | None = None) -> None:
 def _import_runner():
     """The `lume_pva.runner` module (it holds `Runner` and `PutMode`)."""
     try:
-        import lume_pva.runner as runner
+        import lume_pva.runner
     except ImportError as error:
         raise ImportError(
             "serve.py needs the lume-pva package, which is not installed."
         ) from error
-    return runner
+    return lume_pva.runner
 
 
 if __name__ == "__main__":

@@ -66,7 +66,7 @@ def test_archive_round_trip():
     import numpy
     import RF_Track as rft
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
 
     w = pkunit.empty_work_dir()
     path = str(w.join("cavity2d.h5"))
@@ -88,17 +88,17 @@ def test_archive_round_trip():
     rft.rng_set_seed(5489)
     bunch = rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 100.0, twiss, 30)
 
-    original = RfTrackSimulator(beamline, bunch)
+    original = RFTrackSimulator(beamline, bunch)
     original.archive(path)
 
     with h5py.File(path, "r") as f:
         pkunit.pkeq("RF_FieldMap_2d", f["elements"]["0"].attrs["class"])
         # a shared "field_maps" dataset, referenced by "@<md5>" --
-        # see RfTrackSimulator.archive()'s own docstring
+        # see RFTrackSimulator.archive()'s own docstring
         ez_ref = f["elements"]["0"].attrs["ez"]
         pkunit.pkeq((11, 6), f["field_maps"][ez_ref[1:]].shape)
 
-    reloaded = RfTrackSimulator()
+    reloaded = RFTrackSimulator()
     rft.rng_set_seed(5489)
     reloaded.load_archive(path)
 

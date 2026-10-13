@@ -47,7 +47,7 @@ def test_serialize_recovers_kx_ky_independent_of_reference_momentum():
 def test_archive_round_trip():
     import RF_Track as rft
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
 
     w = pkunit.empty_work_dir()
     path = str(w.join("corrector.h5"))
@@ -70,10 +70,10 @@ def test_archive_round_trip():
     rft.rng_set_seed(5489)
     bunch = rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 100.0, twiss, 50)
 
-    original = RfTrackSimulator(beamline, bunch)
+    original = RFTrackSimulator(beamline, bunch)
     original.archive(path)
 
-    reloaded = RfTrackSimulator()
+    reloaded = RFTrackSimulator()
     rft.rng_set_seed(5489)
     reloaded.load_archive(path)
 
@@ -89,7 +89,7 @@ def test_archive_round_trip():
     original.track()
     reloaded.track()
     # the reloaded bunch is a new, statistically-equivalent realization
-    # (see RfTrackSimulator.archive()'s docstring), not an exact copy, so
+    # (see RFTrackSimulator.archive()'s docstring), not an exact copy, so
     # compare within a loose tolerance rather than exact equality
     o = original.tracked_bunch.get_phase_space("%x").mean()
     r = reloaded.tracked_bunch.get_phase_space("%x").mean()

@@ -7,12 +7,12 @@
 
 def _build_model():
     import RF_Track as rft
-    from rslume.rftrack import RfTrack
+    from rslume.rftrack import LUMERFTrackModel
     from rslume.rftrack_actions import (
-        RfTrackReadOnlyScalarVariable,
-        RfTrackWritableScalarVariable,
+        RFTrackReadOnlyScalarVariable,
+        RFTrackWritableScalarVariable,
     )
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
 
     q = rft.Quadrupole(0.1, 5.0)
     q.set_name("Q1")
@@ -33,20 +33,20 @@ def _build_model():
     twiss.sigma_pt = 1.0
     bunch = rft.Bunch6d_QR(rft.electronmass, -1 * rft.nC, -1, 100.0, twiss, 100)
 
-    simulator = RfTrackSimulator(beamline, bunch)
-    writable = RfTrackWritableScalarVariable(
+    simulator = RFTrackSimulator(beamline, bunch)
+    writable = RFTrackWritableScalarVariable(
         name="Q1_strength",
         element_name="Q1",
         attribute="strength",
         default_value=5.0,
     )
-    read_only = RfTrackReadOnlyScalarVariable(
+    read_only = RFTrackReadOnlyScalarVariable(
         name="Q1_strength_ro",
         element_name="Q1",
         attribute="strength",
         read_only=True,
     )
-    return RfTrack(simulator=simulator, action_variables=[writable, read_only])
+    return LUMERFTrackModel(simulator=simulator, action_variables=[writable, read_only])
 
 
 def test_set_and_get():
@@ -91,9 +91,9 @@ def test_reset():
 
 def _build_corrector_model():
     import RF_Track as rft
-    from rslume.rftrack import RfTrack
-    from rslume.rftrack_actions import RfTrackWritableVectorComponentVariable
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack import LUMERFTrackModel
+    from rslume.rftrack_actions import RFTrackWritableVectorComponentVariable
+    from rslume.rftrack_simulator import RFTrackSimulator
 
     c = rft.Corrector(0.1)
     c.set_name("C1")
@@ -111,22 +111,22 @@ def _build_corrector_model():
     twiss.sigma_pt = 1.0
     bunch = rft.Bunch6d_QR(rft.electronmass, -1 * rft.nC, -1, 100.0, twiss, 100)
 
-    simulator = RfTrackSimulator(beamline, bunch)
-    hkick = RfTrackWritableVectorComponentVariable(
+    simulator = RFTrackSimulator(beamline, bunch)
+    hkick = RFTrackWritableVectorComponentVariable(
         name="C1_hkick",
         element_name="C1",
         attribute="strength",
         index=0,
         default_value=0.0,
     )
-    vkick = RfTrackWritableVectorComponentVariable(
+    vkick = RFTrackWritableVectorComponentVariable(
         name="C1_vkick",
         element_name="C1",
         attribute="strength",
         index=1,
         default_value=0.0,
     )
-    return RfTrack(simulator=simulator, action_variables=[hkick, vkick])
+    return LUMERFTrackModel(simulator=simulator, action_variables=[hkick, vkick])
 
 
 def _pkeq_approx(expect, actual):

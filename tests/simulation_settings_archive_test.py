@@ -1,4 +1,4 @@
-"""RfTrackSimulator.archive()/load_archive() can carry simulation-level
+"""RFTrackSimulator.archive()/load_archive() can carry simulation-level
 settings (autophase, space charge) that have no live equivalent at all
 in RF-Track's own API to read back (confirmed empirically:
 rft.cvar.SC_engine's getter is completely type-erased, and dir(rft.cvar)
@@ -34,20 +34,20 @@ def _build_lattice(rft):
 
 def test_pic_space_charge_and_autophase_round_trip():
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
     import RF_Track as rft
 
     w = pkunit.empty_work_dir()
     path = str(w.join("archive.h5"))
 
-    original = RfTrackSimulator(_build_lattice(rft), _build_bunch(rft))
+    original = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))
     original.archive(
         path,
         autophase=True,
         space_charge=dict(kind="pic", dt_mm=3.0, grid=(8, 8, 16), mirror_m=0.0, smooth=0.5),
     )
 
-    reloaded = RfTrackSimulator()
+    reloaded = RFTrackSimulator()
     reloaded.load_archive(path)
     pkunit.pkeq(True, reloaded.autophase)
     pkunit.pkeq(
@@ -58,16 +58,16 @@ def test_pic_space_charge_and_autophase_round_trip():
 
 def test_p2p_space_charge_round_trip():
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
     import RF_Track as rft
 
     w = pkunit.empty_work_dir()
     path = str(w.join("archive.h5"))
 
-    original = RfTrackSimulator(_build_lattice(rft), _build_bunch(rft))
+    original = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))
     original.archive(path, autophase=False, space_charge=dict(kind="p2p"))
 
-    reloaded = RfTrackSimulator()
+    reloaded = RFTrackSimulator()
     reloaded.load_archive(path)
     pkunit.pkeq(False, reloaded.autophase)
     pkunit.pkeq(dict(kind="p2p"), reloaded.space_charge)
@@ -75,16 +75,16 @@ def test_p2p_space_charge_round_trip():
 
 def test_unset_space_charge_defaults_to_none_autophase_is_inferred():
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
     import RF_Track as rft
 
     w = pkunit.empty_work_dir()
     path = str(w.join("archive.h5"))
 
-    original = RfTrackSimulator(_build_lattice(rft), _build_bunch(rft))
+    original = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))
     original.archive(path)
 
-    reloaded = RfTrackSimulator()
+    reloaded = RFTrackSimulator()
     reloaded.load_archive(path)
     # autophase=None means "infer it," not "don't record it" -- a
     # Drift-only lattice has no cavity to have ever been autophase()'d,
@@ -98,15 +98,15 @@ def test_rearchive_keeps_loaded_space_charge():
     import h5py
     import RF_Track as rft
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
 
     w = pkunit.empty_work_dir()
     first = str(w.join("first.h5"))
     second = str(w.join("second.h5"))
 
-    original = RfTrackSimulator(_build_lattice(rft), _build_bunch(rft))
+    original = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))
     original.archive(first, space_charge={"kind": "p2p"})
-    loaded = RfTrackSimulator()
+    loaded = RFTrackSimulator()
     loaded.load_archive(first)
     loaded.archive(second)
     with h5py.File(second, "r") as f:

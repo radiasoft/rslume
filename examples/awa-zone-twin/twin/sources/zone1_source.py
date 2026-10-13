@@ -8,12 +8,12 @@ loader).
 from pykern.pkcollections import PKDict
 import RF_Track as rft
 import numpy
-from rslume.rftrack import RfTrack
+from rslume.rftrack import LUMERFTrackModel
 from rslume.rftrack_actions import (
-    RfTrackWritableScalarVariable,
-    RfTrackWritableVectorComponentVariable,
+    RFTrackWritableScalarVariable,
+    RFTrackWritableVectorComponentVariable,
 )
-from rslume.rftrack_simulator import RfTrackSimulator
+from rslume.rftrack_simulator import RFTrackSimulator
 from rslume.rftrack_units import UNITS
 
 ELEMENTS = [
@@ -608,7 +608,7 @@ def build_beamline():
 
 
 def build_model(volume, bunch):
-    """`volume`/`bunch` wrapped as an `rslume.rftrack.RfTrack`, with one
+    """`volume`/`bunch` wrapped as a `rslume.rftrack.LUMERFTrackModel`, with one
     writable action variable per adjustable ELEMENTS entry -- only
     attributes a real control system could plausibly set (e.g. a
     solenoid's current), never a field-map file name. Each variable's
@@ -632,7 +632,7 @@ def build_model(volume, bunch):
       power/amplitude scale) -- plain on RF_FieldMap_1d/RF_FieldMap_2d,
       unlike Pillbox_Cavity.
     - corrector: strength is a 2-vector ([hkick, vkick]), so this uses
-      RfTrackWritableVectorComponentVariable (one per axis) instead of
+      RFTrackWritableVectorComponentVariable (one per axis) instead of
       the plain scalar variable every other kind uses.
     - solenoid_fieldmap: skipped -- Static_Magnetic_FieldMap_1d has no
       live scale attribute at all, and replace_with() (which could
@@ -642,13 +642,13 @@ def build_model(volume, bunch):
       every other row here -- deliberately out of scope for now.
     - drift/screen/bpm: never control-room knobs.
     """
-    simulator = RfTrackSimulator(volume, bunch)
+    simulator = RFTrackSimulator(volume, bunch)
     variables = []
     for spec in ELEMENTS:
         e = simulator.find_element(spec.name)
         if spec.kind == "quadrupole_gradient":
             variables.append(
-                RfTrackWritableScalarVariable(
+                RFTrackWritableScalarVariable(
                     name=f"{spec.name}_gradient",
                     element_name=spec.name,
                     attribute="gradient",
@@ -658,7 +658,7 @@ def build_model(volume, bunch):
             )
         elif spec.kind == "quadrupole_k1":
             variables.append(
-                RfTrackWritableScalarVariable(
+                RFTrackWritableScalarVariable(
                     name=f"{spec.name}_k1",
                     element_name=spec.name,
                     attribute="strength",
@@ -668,7 +668,7 @@ def build_model(volume, bunch):
             )
         elif spec.kind == "solenoid_analytic":
             variables.append(
-                RfTrackWritableScalarVariable(
+                RFTrackWritableScalarVariable(
                     name=f"{spec.name}_max_current",
                     element_name=spec.name,
                     attribute="max_current",
@@ -678,7 +678,7 @@ def build_model(volume, bunch):
             )
         elif spec.kind == "rbend":
             variables.append(
-                RfTrackWritableScalarVariable(
+                RFTrackWritableScalarVariable(
                     name=f"{spec.name}_angle",
                     element_name=spec.name,
                     attribute="angle",
@@ -689,7 +689,7 @@ def build_model(volume, bunch):
         elif spec.kind == "corrector":
             hkick, vkick = e.get_strength()
             variables.append(
-                RfTrackWritableVectorComponentVariable(
+                RFTrackWritableVectorComponentVariable(
                     name=f"{spec.name}_hkick",
                     element_name=spec.name,
                     attribute="strength",
@@ -699,7 +699,7 @@ def build_model(volume, bunch):
                 )
             )
             variables.append(
-                RfTrackWritableVectorComponentVariable(
+                RFTrackWritableVectorComponentVariable(
                     name=f"{spec.name}_vkick",
                     element_name=spec.name,
                     attribute="strength",
@@ -710,7 +710,7 @@ def build_model(volume, bunch):
             )
         elif spec.kind in ("cavity_analytic", "cavity_fieldmap", "cavity_fieldmap_2d"):
             variables.append(
-                RfTrackWritableScalarVariable(
+                RFTrackWritableScalarVariable(
                     name=f"{spec.name}_phid",
                     element_name=spec.name,
                     attribute="phid",
@@ -720,7 +720,7 @@ def build_model(volume, bunch):
             )
             if spec.kind in ("cavity_fieldmap", "cavity_fieldmap_2d"):
                 variables.append(
-                    RfTrackWritableScalarVariable(
+                    RFTrackWritableScalarVariable(
                         name=f"{spec.name}_p_actual",
                         element_name=spec.name,
                         attribute="P_actual",
@@ -728,7 +728,7 @@ def build_model(volume, bunch):
                         unit=UNITS["p_actual"],
                     )
                 )
-    return RfTrack(simulator=simulator, action_variables=variables)
+    return LUMERFTrackModel(simulator=simulator, action_variables=variables)
 
 
 def build_bunch():

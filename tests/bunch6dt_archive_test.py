@@ -1,4 +1,4 @@
-"""rslume.rftrack_simulator.RfTrackSimulator.archive()/load_archive() round-trip test
+"""rslume.rftrack_simulator.RFTrackSimulator.archive()/load_archive() round-trip test
 for a Bunch6dT initial bunch (e.g. a Cathode Emission distribution),
 distinct from x_band_fodo_archive_test.py's Bunch6d coverage.
 
@@ -42,12 +42,12 @@ def _build_volume(rft):
 def test_bunch6dt_archive_round_trip():
     import RF_Track as rft
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
 
     w = pkunit.empty_work_dir()
     path = str(w.join("archive.h5"))
 
-    original = RfTrackSimulator(_build_volume(rft), _build_bunch(rft))
+    original = RFTrackSimulator(_build_volume(rft), _build_bunch(rft))
     original.archive(path)
 
     # the archive is plain, self-describing HDF5 -- not something that
@@ -61,7 +61,7 @@ def test_bunch6dt_archive_round_trip():
         pkunit.pkeq(b"openPMD", f.attrs["dataType"])
         pkunit.pkok("particles" in f, "expected a particles group")
 
-    reloaded = RfTrackSimulator()
+    reloaded = RFTrackSimulator()
     reloaded.load_archive(path)
     pkunit.pkeq("Bunch6dT", type(reloaded.initial_bunch).__name__)
 

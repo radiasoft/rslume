@@ -21,7 +21,7 @@ def test_every_archived_numeric_field_has_a_unit():
     import numpy
     import RF_Track as rft
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
 
     ez = (1e6 * numpy.sin(numpy.linspace(0, numpy.pi, 21))).astype(complex)
     elements = [
@@ -45,7 +45,7 @@ def test_every_archived_numeric_field_has_a_unit():
     bunch = rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 10.0, twiss, 10)
 
     path = str(pkunit.empty_work_dir().join("a.h5"))
-    RfTrackSimulator(lattice, bunch).archive(path)
+    RFTrackSimulator(lattice, bunch).archive(path)
     with h5py.File(path, "r") as f:
         for i in f["elements"]:
             e = f["elements"][i]

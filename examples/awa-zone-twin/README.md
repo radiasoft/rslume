@@ -26,9 +26,9 @@ are, so the lattice, bunch, autophase and space-charge setup come from
 them (`twin/zone_model.py` execs them).
 
 `twin/zone_model.py`'s `Zone1Model`/`Zone2Model` are `lume.model.LUMEModel`s
-around each script's `build_model()` (an `rslume.rftrack.RfTrack`), which
-already exposes every element with a live setter (gradient, k1, phid,
-P_actual, hkick/vkick). Zone1's solenoids are the exception: their field is
+around each script's `build_model()` (a
+`rslume.rftrack.LUMERFTrackModel`), which already exposes every element with
+a live setter (gradient, k1, phid, P_actual, hkick/vkick). Zone1's solenoids are the exception: their field is
 rescaled when the element is built, so `Zone1Model` adds a
 `<name>_scale_factor` variable for each that rebuilds the whole zone.
 `build_chain()` returns `StagedModel([Zone1Model(), Zone2Model()])`; zone1's

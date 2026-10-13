@@ -1,8 +1,8 @@
-"""RfTrackSimulator: wraps a native RF-Track beamline + bunch
+"""RFTrackSimulator: wraps a native RF-Track beamline + bunch
 
-The "simulator" `rslume.rftrack.RfTrack` (a `lume.actions.ActionModel`)
-wraps and every `rslume.rftrack_actions` action variable operates on --
-see `RfTrackSimulator`'s own docstring. `archive()`/`load_archive()`
+The "simulator" `rslume.rftrack.LUMERFTrackModel`
+(a `lume.actions.ActionModel`) wraps and every `rslume.rftrack_actions`
+action variable operates on -- see `RFTrackSimulator`'s own docstring. `archive()`/`load_archive()`
 delegate to `rslume.rftrack_archive`, which holds the actual HDF5
 serialization.
 
@@ -10,7 +10,7 @@ serialization.
 """
 
 
-class RfTrackSimulator:
+class RFTrackSimulator:
     """Wraps a native RF-Track beamline and initial bunch.
 
     Args:

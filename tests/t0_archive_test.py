@@ -1,4 +1,4 @@
-"""RfTrackSimulator.archive()/load_archive() faithfully preserves an RF
+"""RFTrackSimulator.archive()/load_archive() faithfully preserves an RF
 element's autophase() correction (t0), not just the phid it was built
 with -- get_phid() never reflects it (confirmed empirically: it always
 reads back the phid the element was constructed with), so this is the
@@ -16,7 +16,7 @@ from volume_archive_test import _build_bunch, _build_volume
 def test_t0_archive_round_trip():
     import RF_Track as rft
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
 
     w = pkunit.empty_work_dir()
     path = str(w.join("archive.h5"))
@@ -37,14 +37,14 @@ def test_t0_archive_round_trip():
     pkunit.pkeq(10.0, cavity.get_phid())
 
     rft.rng_set_seed(5489)
-    original = RfTrackSimulator(volume, _build_bunch(rft))
+    original = RFTrackSimulator(volume, _build_bunch(rft))
     original.archive(path)
     original.track()
 
     # load_archive() reads the archived particles directly -- no new
     # random draw, so no need to reseed before it (unlike original's
     # own _build_bunch() call above).
-    reloaded = RfTrackSimulator()
+    reloaded = RFTrackSimulator()
     reloaded.load_archive(path)
     pkunit.pkok(reloaded.beamline[0].t0_is_set(), "expected t0 to survive the archive")
     pkunit.pkeq(original_t0, reloaded.beamline[0].get_t0())

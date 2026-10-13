@@ -1,4 +1,4 @@
-"""rslume.rftrack_simulator.RfTrackSimulator.archive()/load_archive() round-trip test
+"""rslume.rftrack_simulator.RFTrackSimulator.archive()/load_archive() round-trip test
 for a Volume-mode beamline with an RF_FieldMap_1d cavity and a Screen --
 the element classes and absolute (not sequential) positioning a Volume
 beamline of field-map cavities/solenoids, correctors, and screens needs.
@@ -52,13 +52,13 @@ def test_volume_archive_round_trip():
     import h5py
     import RF_Track as rft
     from pykern import pkunit
-    from rslume.rftrack_simulator import RfTrackSimulator
+    from rslume.rftrack_simulator import RFTrackSimulator
 
     w = pkunit.empty_work_dir()
     path = str(w.join("volume.h5"))
 
     rft.rng_set_seed(5489)
-    original = RfTrackSimulator(_build_volume(rft), _build_bunch(rft))
+    original = RFTrackSimulator(_build_volume(rft), _build_bunch(rft))
     # archive before track(): Volume.track() autophases the cavity in
     # place (mutates its phid to find an on-crest phase), so archiving
     # afterwards would capture that autophased value instead of the 10.0
@@ -81,7 +81,7 @@ def test_volume_archive_round_trip():
 
     pkunit.pkeq(10.0, original.beamline[0].get_phid(), "archive() must not mutate beamline")
 
-    reloaded = RfTrackSimulator()
+    reloaded = RFTrackSimulator()
     rft.rng_set_seed(5489)
     reloaded.load_archive(path)
 
