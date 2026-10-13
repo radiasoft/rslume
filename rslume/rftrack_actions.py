@@ -5,9 +5,7 @@ Each class exposes one RF-Track element attribute (via its paired
 `lume.actions.Action`, for use as an `RfTrack` action variable --
 generic, simulator-level plumbing with no unit conversion or PV-naming
 convention of its own (a facility-specific control-system layer, if
-one is ever needed, belongs on top of these, the way
-`slaclab/virtual-accelerator`'s `cheetah/actions.py` layers its own
-PVs on top of `lume_cheetah`'s equally generic action classes).
+one is ever needed, belongs on top of these).
 
 Class order here follows the inheritance chain (each base class
 defined before what builds on it), not strict alphabetical order --
@@ -20,7 +18,6 @@ since every other class in this module depends on it.
 from lume.actions import ReadOnlyActionMixin, WritableActionMixin
 from lume.exceptions import ReadOnlyError
 from lume.variables import ScalarVariable
-from pykern.pkdebug import pkdc, pkdlog, pkdp
 
 
 class _RfTrackElementAccessMixin:

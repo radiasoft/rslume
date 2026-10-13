@@ -1,15 +1,15 @@
 """Action-variable implementations for the AWA zone twin's own extra PVs
--- the ones the generated `build_model()` (via `rslume.rftrack`) can't cover: zone1's solenoid scale factor (baked in
-at construction, no live setter), and each zone's charge/energy/
-energy-spread diagnostics and screen images (derived from the tracked
-bunch, not a single element attribute at all).
+-- the ones the generated `build_model()` (via `rslume.rftrack`) can't
+cover: zone1's solenoid scale factor (baked in at construction, no live
+setter), and each zone's charge/energy/energy-spread diagnostics and
+screen images (derived from the tracked bunch, not a single element
+attribute at all).
 
-Mirrors how `slaclab/virtual-accelerator`'s `cheetah/actions.py` layers
-its own facility-specific PVs on top of `lume_cheetah`'s generic ones --
-`rslume.rftrack_actions`'s own action classes (`RfTrackWritableScalarVariable`
-etc.) are that generic layer here; these are the AWA-twin-specific one.
+`rslume.rftrack_actions`'s own action classes
+(`RfTrackWritableScalarVariable` etc.) are the generic layer; these are
+the AWA-twin-specific one.
 
-Unlike that reference, each variable's `_get`/`_set` here takes the
+Each variable's `_get`/`_set` here takes the
 *owning* `Zone1Model`/`Zone2Model` instance as its "simulator" argument,
 not an RF-Track simulator directly -- the rebuild/screen-image/
 diagnostic-bunch logic these need lives on the zone model itself, not

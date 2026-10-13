@@ -14,7 +14,6 @@ each function's own docstring.
 import beamphysics
 import numpy
 import scipy.constants
-from pykern.pkdebug import pkdc, pkdlog, pkdp
 
 # mass [MeV/c^2], charge [e] -- deliberately just these three, the species
 # every version of beamphysics (nee pmd_beamphysics) this wrapper has been

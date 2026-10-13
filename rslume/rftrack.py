@@ -17,7 +17,6 @@ attributes.
 """
 
 from lume.actions import ActionModel
-from pykern.pkdebug import pkdc, pkdlog, pkdp
 
 from rslume.rftrack_simulator import RfTrackSimulator
 

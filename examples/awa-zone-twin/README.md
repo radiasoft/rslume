@@ -37,9 +37,8 @@ tracked bunch becomes zone2's `initial_particles` on every `set()`, through
 and `particlegroup_to_bunch6d()` (which drifts to a plane, so the bunch
 length survives the handoff).
 
-`twin/actions.py` holds the twin's own PVs as `lume.actions` variables, the
-layer `virtual-accelerator`'s `cheetah/actions.py` plays over
-`lume_cheetah`: each zone's `charge_pC`/`energy_MeV`/`energy_spread_pct`,
+`twin/actions.py` holds the twin's own PVs as `lume.actions` variables:
+each zone's `charge_pC`/`energy_MeV`/`energy_spread_pct`,
 each screen's `<name>_image`, and zone1's `<name>_scale_factor`.
 
 Space charge is zone1 only (zone2 is pure magnetic transport). Neither
