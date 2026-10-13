@@ -138,22 +138,6 @@ def _screen_names(elements):
     return [e.name for e in elements if e.kind == "screen"]
 
 
-def cheap_variable_names(module):
-    """Every name `build_model()` would serve for a loaded generated
-    module (`_zone1_module`/`_zone2_module`), without paying for
-    autophase, space charge, or a real track -- `build_model()` only
-    ever reads each element's *current* value (`e.get_phid()` etc.) to
-    set a variable's `default_value`; it never touches the `bunch`
-    argument itself until `.reset()`/`.set()`/`.track()` is called,
-    none of which happens here. Exists for `archiver/pvlist.py`, which
-    needs every served PV *name* (not its value) without the cost of a
-    full zone1 rebuild (field maps are still loaded by
-    `build_beamline()` itself, but that alone is fast).
-    """
-    volume = module["build_beamline"]()
-    return list(module["build_model"](volume, None).supported_variables)
-
-
 class Zone1Model(FinalParticlesMixIn, LUMEModel):
     """AWA zone 1 as a `LUMEModel`: the chain's
     upstream, self-sourced stage (it generates its own cathode bunch --

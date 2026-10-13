@@ -157,50 +157,6 @@ rather see those dumps (e.g. to diagnose an actual freeze).
 
 To stop, press Ctrl-C in the server terminal and close Phoebus.
 
-## Record changes with the EPICS Archiver Appliance
-
-The twin assumes a quickstart Archiver Appliance (v2.5.0) with
-mgmt/engine/etl/retrieval BPL all under `http://localhost:8008`. Start it, then register
-the twin's PVs so it starts recording every change:
-
-```bash
-# from the Archiver Appliance directory, if not already running
-./dist/quickstart-8008.sh -s -d run dist/apache-tomcat-11.0.26.tar.gz
-
-# from this directory, with serve.py already running (see above)
-cd archiver
-python configure_archiver.py
-```
-
-`archiver/pvlist.py` is the PV list both this and `restore.py` use --
-the scalar names of `twin/zone_model.py`'s variables, so it always matches
-what `serve.py` actually serves (59 names; `tests/archiver_test.py` checks it). A newly-registered PV shows
-`"Initial sampling"` from the appliance's status UI
-(`http://localhost:8008/mgmt/ui/index.html`) for up to a minute before
-settling to `"Being archived"` -- expected, not a failure.
-
-`configure_archiver.py` calls the mgmt BPL `archivePV` action once per
-PV -- confirmed live against the running appliance that it only reads
-the *first* `pv` parameter of a request, so bulk-registering with
-several repeated `pv=` values (a form some other BPL actions do accept)
-silently drops all but the first.
-
-### Restore the twin from a past time
-
-```bash
-cd serving
-python serve.py --restore-at "2026-10-10T02:35:00.000-07:00"
-```
-
-Seeds every writable param from the archiver's recorded value at that
-time (`archiver/restore.py`'s `restore_at()`, the same `getDataAtTime`
-BPL call `lcls_live.archiver.lcls_archiver_restore()` uses, pointed at
-the local appliance instead of SLAC's) instead of each variable's
-default. A param the archiver has no value for at that time
-(never archived, or archived after that time) keeps its default; the
-startup log reports how many of the writable params were actually
-restored (`restoring N/53 writable params from ...`).
-
 ## Limits
 
 - Zone1's space-charge-tracked run is slow: tens of seconds at the default

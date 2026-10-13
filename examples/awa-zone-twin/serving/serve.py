@@ -24,17 +24,8 @@ that. `--wait-for-puts` acknowledges only after the model has finished
 it from Phoebus.
 
 Needs `lume-pva` (already installed in this environment; not a declared
-dependency of `rslume` itself, same as the reference). Run it from this
+dependency of `rslume` itself). Run it from this
 directory or by path; it imports `zone_model.py` from `../twin`.
-
-`--restore-at ISOTIME` seeds the twin's writable params from an EPICS
-Archiver Appliance's recorded values at that time (ISO 8601, e.g.
-`"2026-10-10T02:35:00.000-07:00"`) instead of each variable's
-default, via `archiver/restore.py`'s `restore_at()` -- the same
-`getDataAtTime` BPL call `archiver/configure_archiver.py`'s own PVs were
-registered for. A name the archiver has no value for at that time (never
-archived, or archived after that time) keeps its default instead of
-failing the whole restore.
 """
 
 from __future__ import annotations
@@ -72,19 +63,6 @@ def main(argv: list[str] | None = None) -> None:
         "do not use this from Phoebus, which waits only one second on its UI thread "
         "for a put reply, far shorter than zone1's retrack",
     )
-    parser.add_argument(
-        "--restore-at",
-        metavar="ISOTIME",
-        help='seed writable params from the archiver\'s recorded values at this time '
-        '(ISO 8601, e.g. "2026-10-10T02:35:00.000-07:00") instead of the zones\' own '
-        "defaults",
-    )
-    parser.add_argument(
-        "--archiver-retrieval-url",
-        default=None,
-        help="retrieval URL for --restore-at (default: archiver/restore.py's own "
-        "default, the local quickstart appliance)",
-    )
     parser.add_argument("--log-level", default="INFO")
     parser.add_argument(
         "--threads",
@@ -102,31 +80,6 @@ def main(argv: list[str] | None = None) -> None:
     from zone_model import build_chain
 
     chain = build_chain(n_particles=args.n_particles, threads=args.threads)
-
-    if args.restore_at:
-        sys.path.insert(0, str(repo_root / "archiver"))
-        from pvlist import awa_pv_names
-        from restore import DEFAULT_RETRIEVAL_URL, restore_at
-
-        archived = restore_at(
-            awa_pv_names(args.prefix),
-            args.restore_at,
-            args.archiver_retrieval_url or DEFAULT_RETRIEVAL_URL,
-        )
-        writable = {
-            name
-            for name, variable in chain.supported_variables.items()
-            if not variable.read_only
-        }
-        restored = {
-            name[len(args.prefix) :]: value
-            for name, value in archived.items()
-            if name[len(args.prefix) :] in writable
-        }
-        logging.getLogger(__name__).info(
-            "restoring %d/%d writable params from %s", len(restored), len(writable), args.restore_at
-        )
-        chain.set(restored)
 
     config = runner.Runner.generate_config(
         chain,
