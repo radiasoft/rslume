@@ -15,6 +15,7 @@ or each particle's creation time `t0` for an exact round trip).
 import beamphysics
 import numpy
 import scipy.constants
+from pykern.pkcollections import PKDict
 
 # RF-Track's native phase-space units are mm, mrad, and MeV/c; saved
 # particle files are rescaled to base SI units (m, rad, eV/c, eV, s) to
@@ -165,19 +166,20 @@ def apply_space_charge(beamline, settings):
             float}` (what `RFTrackSimulator.space_charge` holds)
 
     Raises:
-        ValueError: unknown `settings["kind"]`
+        ValueError: unknown `settings.kind`
     """
     import RF_Track as rft
 
-    k = settings["kind"]
+    s = PKDict(settings)
+    k = s.kind
     if k == "p2p":
         rft.cvar.SC_engine = rft.SpaceCharge_P2P()
     elif k == "pic":
         if isinstance(beamline, rft.Volume):
-            beamline.sc_dt_mm = settings["dt_mm"]
-        sc = rft.SpaceCharge_PIC_FreeSpace(*[int(n) for n in settings["grid"]])
-        sc.set_smooth(float(settings["smooth"]))
-        sc.set_mirror(float(settings["mirror_m"]))
+            beamline.sc_dt_mm = s.dt_mm
+        sc = rft.SpaceCharge_PIC_FreeSpace(*[int(n) for n in s.grid])
+        sc.set_smooth(float(s.smooth))
+        sc.set_mirror(float(s.mirror_m))
         # rft.cvar.SC_engine rather than Volume.set_sc_engine(): the
         # latter does not apply space-charge forces the same way for a
         # multi-element Volume.

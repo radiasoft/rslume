@@ -88,6 +88,8 @@ def archive(simulator, path, autophase=None, space_charge=None):
         autophase = _infer_autophase(elements)
     if space_charge is None:
         space_charge = simulator.space_charge
+    if space_charge is not None:
+        space_charge = PKDict(space_charge)
     with h5py.File(path, "w") as f:
         # no dataType attr of our own: ParticleGroup.write() sets (and
         # would overwrite) openPMD's
@@ -97,12 +99,12 @@ def archive(simulator, path, autophase=None, space_charge=None):
         f.attrs["autophase"] = int(autophase)
         if space_charge is not None:
             sc = f.create_group("space_charge")
-            sc.attrs["kind"] = space_charge["kind"]
-            if space_charge["kind"] == "pic":
-                sc.attrs["dt_mm"] = float(space_charge["dt_mm"])
-                sc.attrs["grid"] = numpy.asarray(space_charge["grid"], dtype=int)
-                sc.attrs["mirror_m"] = float(space_charge["mirror_m"])
-                sc.attrs["smooth"] = float(space_charge["smooth"])
+            sc.attrs["kind"] = space_charge.kind
+            if space_charge.kind == "pic":
+                sc.attrs["dt_mm"] = float(space_charge.dt_mm)
+                sc.attrs["grid"] = numpy.asarray(space_charge.grid, dtype=int)
+                sc.attrs["mirror_m"] = float(space_charge.mirror_m)
+                sc.attrs["smooth"] = float(space_charge.smooth)
         if kind == "Volume":
             # get_s0()/get_s1() return a Frame (like an element's
             # get_offsets()), not a plain float -- its origin's z
@@ -163,8 +165,8 @@ def load_archive(simulator, path):
             sc = f["space_charge"]
             simulator.space_charge = PKDict(sc.attrs)
             if "grid" in simulator.space_charge:
-                simulator.space_charge["grid"] = tuple(
-                    int(n) for n in simulator.space_charge["grid"]
+                simulator.space_charge.grid = tuple(
+                    int(n) for n in simulator.space_charge.grid
                 )
         else:
             simulator.space_charge = None

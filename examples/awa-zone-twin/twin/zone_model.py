@@ -12,9 +12,10 @@ own `build_model()` action variables (plus a few extras, below) as
 `LUMEModel` variables.
 
 `rslume.rftrack.build_model()`'s per-element action variables (gradient/
-phid/k1/max_current/P_actual/hkick/vkick) cover everything with a live, no-rebuild RF-Track setter.
-The one real gap: zone1's solenoids (`SolBF`/`SolM`/`SolL1`/`SolL2`/`SolL4`) are `solenoid_fieldmap` kind, whose field is rescaled
-from a file at *construction* time -- `build_model()` deliberately
+phid/k1/max_current/P_actual/hkick/vkick) cover everything with a live,
+no-rebuild RF-Track setter. The one real gap: zone1's solenoids (the
+`solenoid_fieldmap` elements) have a field that is rescaled from a file at
+*construction* time -- `build_model()` deliberately
 skips them (no live scale attribute exists on
 `Static_Magnetic_FieldMap_1d`). `Zone1Model` adds a rebuild-based
 `<name>_scale_factor` variable for each one instead: changing it edits
@@ -44,28 +45,16 @@ Zone2's rebuild (only reached via its own `reset()`) has no field
 maps, no autophase, and no space charge, and is fast.
 """
 
-import pathlib
-
-import numpy
-import RF_Track as rft
+from actions import IMAGE_BINS, SolenoidScaleFactorVariable
 from lume.model import LUMEModel
 from lume.staged_model import FinalParticlesMixIn, InitialParticlesMixIn, StagedModel
-
-from rslume.rftrack import build_model
-from rslume.rftrack_utils import (
-    apply_space_charge,
-    bunch6d_to_particlegroup,
-    bunch6dt_to_particlegroup,
-    particlegroup_to_bunch6d,
-)
-
-from actions import (
-    IMAGE_BINS,
-    SolenoidScaleFactorVariable,
-    diagnostic_variables,
-    screen_image_variables,
-    solenoid_scale_factor_variables,
-)
+from pykern.pkcollections import PKDict
+import RF_Track as rft
+import actions
+import numpy
+import pathlib
+import rslume.rftrack
+import rslume.rftrack_utils
 
 _SOURCES_DIR = pathlib.Path(__file__).resolve().parent / "sources"
 
@@ -96,54 +85,50 @@ SCREEN_FOV_MM = {
 }
 
 
-def _load_generated_module(name, lib_dir=None):
-    """Exec `sources/<name>.py` (a generated parameters.py, its
-    trailing auto-run `main()` call already stripped) into a fresh namespace, returning that
-    namespace as a plain dict of its top-level names (`ELEMENTS`,
-    `BUNCH`, `SETTINGS`, `build_beamline`, `build_bunch`,
-    `autophase` if the sim used it, ...).
-
-    `lib_dir`, if given, rewrites every element's own field-map `file`
-    to an absolute path under it -- the generated script's own `file`
-    values are bare basenames, meant to be resolved relative to
-    whatever run directory the lib file would have been copied into,
-    not anything this module can rely on as its current working
-    directory.
+class _ZoneModel(LUMEModel):
+    """What `Zone1Model` and `Zone2Model` share: the wrapped
+    `LUMERFTrackModel` (`self.model`) supplies the per-element variables,
+    and each zone adds its own diagnostics and screen images to them.
+    Defined first because the zone classes inherit from it.
     """
-    path = _SOURCES_DIR / f"{name}.py"
-    ns = {"__file__": str(path), "__name__": f"rslume_awa_zone_twin.{name}"}
-    exec(compile(path.read_text(), str(path), "exec"), ns)
-    if lib_dir is not None:
-        for spec in ns["ELEMENTS"]:
-            if "file" in spec:
-                spec.file = str(lib_dir / spec.file)
-    return ns
+
+    @property
+    def supported_variables(self):
+        return dict(self._variables)
+
+    def _get(self, names):
+        values = {}
+        for name in names:
+            if name in self.model.supported_variables:
+                values[name] = self.model.get([name])[name]
+            else:
+                values[name] = self._variables[name]._get(self)
+        return values
+
+    def _init_variables(self, prefix, extra=None):
+        """Collect `self.model`'s variables, then `extra` (this zone's own
+        variables, if any), the diagnostics named `<prefix>...` and the
+        screen images.
+        """
+        self._variables = dict(self.model.supported_variables)
+        self._variables.update(extra or {})
+        self._variables.update(actions.diagnostic_variables(prefix))
+        self._variables.update(actions.screen_image_variables(self._screens))
+
+    def _update_screen_images(self):
+        self.screen_images = {
+            f"{name}_image": _screen_image(bunch, SCREEN_FOV_MM[name])
+            for name, bunch in zip(
+                self._screens, self.model.simulator.beamline.get_bunch_at_screens()
+            )
+        }
 
 
-# Read-only views of each generated source (element tables, screen names,
-# variable names) for consumers that only inspect it. `Zone1Model` execs its
-# own copy, because it edits ELEMENTS/BUNCH in place on every rebuild.
-ZONE1_MODULE = _load_generated_module("zone1_source", lib_dir=_SOURCES_DIR / "zone1_lib")
-ZONE2_MODULE = _load_generated_module("zone2_source")
-
-
-def _find_spec(elements, name):
-    for e in elements:
-        if e.name == name:
-            return e
-    raise KeyError(name)
-
-
-class Zone1Model(FinalParticlesMixIn, LUMEModel):
+class Zone1Model(FinalParticlesMixIn, _ZoneModel):
     """AWA zone 1 as a `LUMEModel`: the chain's
     upstream, self-sourced stage (it generates its own cathode bunch --
     there is no stage ahead of it to inject one).
     """
-
-    # Volume.get_bunch_at_screens() order follows these elements' own
-    # physical order in ELEMENTS, confirmed against the generated
-    # script's own ELEMENTS table.
-    SOLENOID_NAMES = ("SolBF", "SolM", "SolL1", "SolL2", "SolL4")
 
     def __init__(self, n_particles=None):
         """`n_particles`, if given, overrides the archived sim's own
@@ -155,21 +140,24 @@ class Zone1Model(FinalParticlesMixIn, LUMEModel):
         self._module = _load_generated_module(
             "zone1_source", lib_dir=_SOURCES_DIR / "zone1_lib"
         )
-        rft.rng_set_seed(self._module["BUNCH"].random_seed)
+        rft.rng_set_seed(self._module.BUNCH.random_seed)
         self._n_particles = n_particles
-        self._screens = screen_names(self._module["ELEMENTS"])
+        self._screens = screen_names(self._module.ELEMENTS)
+        # `build_model()` skips every solenoid_fieldmap element (no live
+        # setter exists), so these are the ones that need a rebuild.
         self._default_scale_factor = {
-            name: float(_find_spec(self._module["ELEMENTS"], name).scale_factor)
-            for name in self.SOLENOID_NAMES
+            e.name: float(e.scale_factor)
+            for e in self._module.ELEMENTS
+            if e.kind == "solenoid_fieldmap"
         }
         self.solenoid_scale_factor = dict(self._default_scale_factor)
         self.model = None
         self.screen_images = {}
         self._rebuild()
-        self._variables = dict(self.model.supported_variables)
-        self._variables.update(solenoid_scale_factor_variables(self._default_scale_factor))
-        self._variables.update(diagnostic_variables("zone1_"))
-        self._variables.update(screen_image_variables(self._screens))
+        self._init_variables(
+            "zone1_",
+            actions.solenoid_scale_factor_variables(self._default_scale_factor),
+        )
 
     def diagnostic_bunch(self):
         """The bunch `actions.py`'s diagnostic variables measure --
@@ -187,35 +175,24 @@ class Zone1Model(FinalParticlesMixIn, LUMEModel):
         bunch = self.model.simulator.tracked_bunch
         if bunch is None:
             return None
-        return bunch6dt_to_particlegroup(bunch)
+        return rslume.rftrack_utils.bunch6dt_to_particlegroup(bunch)
 
     def reset(self):
         self.solenoid_scale_factor = dict(self._default_scale_factor)
         self._rebuild()
 
-    @property
-    def supported_variables(self):
-        return dict(self._variables)
-
-    def _get(self, names):
-        values = {}
-        for name in names:
-            if name in self.model.supported_variables:
-                values[name] = self.model.get([name])[name]
-            else:
-                values[name] = self._variables[name]._get(self)
-        return values
-
     def _rebuild(self):
         for name, value in self.solenoid_scale_factor.items():
-            _find_spec(self._module["ELEMENTS"], name).scale_factor = value
+            _find_spec(self._module.ELEMENTS, name).scale_factor = value
         if self._n_particles is not None:
-            self._module["BUNCH"].np = self._n_particles
-        bunch = self._module["build_bunch"]()
-        volume = self._module["build_beamline"]()
-        self._module["autophase"](volume)
-        apply_space_charge(volume, self._module["SETTINGS"].space_charge)
-        self.model = build_model(self._module["ELEMENTS"], volume, bunch)
+            self._module.BUNCH.np = self._n_particles
+        bunch = self._module.build_bunch()
+        volume = self._module.build_beamline()
+        self._module.autophase(volume)
+        rslume.rftrack_utils.apply_space_charge(
+            volume, self._module.SETTINGS.space_charge
+        )
+        self.model = rslume.rftrack.build_model(self._module.ELEMENTS, volume, bunch)
         self.model.reset()
         self._update_screen_images()
 
@@ -243,16 +220,8 @@ class Zone1Model(FinalParticlesMixIn, LUMEModel):
             self.model.set(model_values)
             self._update_screen_images()
 
-    def _update_screen_images(self):
-        self.screen_images = {
-            f"{name}_image": _screen_image(bunch, SCREEN_FOV_MM[name])
-            for name, bunch in zip(
-                self._screens, self.model.simulator.beamline.get_bunch_at_screens()
-            )
-        }
 
-
-class Zone2Model(InitialParticlesMixIn, LUMEModel):
+class Zone2Model(InitialParticlesMixIn, _ZoneModel):
     """AWA zone 2 as a `LUMEModel`: the chain's
     downstream, particle-accepting stage. Every one of its elements
     (quadrupoles, correctors) has a live `build_model()` setter, so
@@ -272,20 +241,9 @@ class Zone2Model(InitialParticlesMixIn, LUMEModel):
 
     def __init__(self):
         super().__init__()
-        self._screens = screen_names(ZONE2_MODULE["ELEMENTS"])
-        self._has_injected = False
-        self.model = build_model(
-            ZONE2_MODULE["ELEMENTS"],
-            ZONE2_MODULE["build_beamline"](),
-            _placeholder_bunch(ZONE2_MODULE["BUNCH"]),
-        )
-        self.model.reset()
-        self.screen_images = {
-            f"{name}_image": numpy.zeros((IMAGE_BINS, IMAGE_BINS)) for name in self._screens
-        }
-        self._variables = dict(self.model.supported_variables)
-        self._variables.update(diagnostic_variables("zone2_"))
-        self._variables.update(screen_image_variables(self._screens))
+        self._screens = screen_names(ZONE2_MODULE.ELEMENTS)
+        self._build()
+        self._init_variables("zone2_")
 
     def diagnostic_bunch(self):
         """The bunch `actions.py`'s diagnostic variables measure --
@@ -303,39 +261,34 @@ class Zone2Model(InitialParticlesMixIn, LUMEModel):
         been injected."""
         if not self._has_injected:
             return None
-        return bunch6d_to_particlegroup(self.model.simulator.initial_bunch)
+        return rslume.rftrack_utils.bunch6d_to_particlegroup(
+            self.model.simulator.initial_bunch
+        )
 
     @initial_particles.setter
     def initial_particles(self, particles):
-        self.model.simulator.initial_bunch = particlegroup_to_bunch6d(particles)
+        self.model.simulator.initial_bunch = (
+            rslume.rftrack_utils.particlegroup_to_bunch6d(particles)
+        )
         self.model.simulator.track()
         self._has_injected = True
         self._update_screen_images()
 
     def reset(self):
-        self.model = build_model(
-            ZONE2_MODULE["ELEMENTS"],
-            ZONE2_MODULE["build_beamline"](),
-            _placeholder_bunch(ZONE2_MODULE["BUNCH"]),
+        self._build()
+
+    def _build(self):
+        self.model = rslume.rftrack.build_model(
+            ZONE2_MODULE.ELEMENTS,
+            ZONE2_MODULE.build_beamline(),
+            _placeholder_bunch(ZONE2_MODULE.BUNCH),
         )
         self.model.reset()
         self._has_injected = False
         self.screen_images = {
-            f"{name}_image": numpy.zeros((IMAGE_BINS, IMAGE_BINS)) for name in self._screens
+            f"{name}_image": numpy.zeros((IMAGE_BINS, IMAGE_BINS))
+            for name in self._screens
         }
-
-    @property
-    def supported_variables(self):
-        return dict(self._variables)
-
-    def _get(self, names):
-        values = {}
-        for name in names:
-            if name in self.model.supported_variables:
-                values[name] = self.model.get([name])[name]
-            else:
-                values[name] = self._variables[name]._get(self)
-        return values
 
     def _set(self, values):
         # Always safe: simulator.initial_bunch is the real injected
@@ -344,14 +297,6 @@ class Zone2Model(InitialParticlesMixIn, LUMEModel):
         self.model.set(values)
         if self._has_injected:
             self._update_screen_images()
-
-    def _update_screen_images(self):
-        self.screen_images = {
-            f"{name}_image": _screen_image(bunch, SCREEN_FOV_MM[name])
-            for name, bunch in zip(
-                self._screens, self.model.simulator.beamline.get_bunch_at_screens()
-            )
-        }
 
 
 def build_chain(n_particles=None, threads=None):
@@ -369,6 +314,37 @@ def build_chain(n_particles=None, threads=None):
 
 def screen_names(elements):
     return [e.name for e in elements if e.kind == "screen"]
+
+
+def _find_spec(elements, name):
+    for e in elements:
+        if e.name == name:
+            return e
+    raise KeyError(name)
+
+
+def _load_generated_module(name, lib_dir=None):
+    """Exec `sources/<name>.py` (a generated parameters.py, its
+    trailing auto-run `main()` call already stripped) into a fresh namespace, returning that
+    namespace as a `PKDict` of its top-level names (`ELEMENTS`,
+    `BUNCH`, `SETTINGS`, `build_beamline`, `build_bunch`,
+    `autophase` if the sim used it, ...).
+
+    `lib_dir`, if given, rewrites every element's own field-map `file`
+    to an absolute path under it -- the generated script's own `file`
+    values are bare basenames, meant to be resolved relative to
+    whatever run directory the lib file would have been copied into,
+    not anything this module can rely on as its current working
+    directory.
+    """
+    path = _SOURCES_DIR / f"{name}.py"
+    ns = PKDict(__file__=str(path), __name__=f"rslume_awa_zone_twin.{name}")
+    exec(compile(path.read_text(), str(path), "exec"), ns)
+    if lib_dir is not None:
+        for spec in ns.ELEMENTS:
+            if "file" in spec:
+                spec.file = str(lib_dir / spec.file)
+    return ns
 
 
 def _placeholder_bunch(bunch_settings):
@@ -401,3 +377,12 @@ def _screen_image(bunch, size_mm, bins=IMAGE_BINS):
     )
     return image.astype(numpy.float64)
 
+
+# Read-only views of each generated source (element tables, screen names,
+# variable names) for consumers that only inspect it. `Zone1Model` execs its
+# own copy, because it edits ELEMENTS/BUNCH in place on every rebuild.
+# Assigned here, after `_load_generated_module()`, which they call at import.
+ZONE1_MODULE = _load_generated_module(
+    "zone1_source", lib_dir=_SOURCES_DIR / "zone1_lib"
+)
+ZONE2_MODULE = _load_generated_module("zone2_source")

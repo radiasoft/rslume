@@ -48,8 +48,8 @@ script pins a thread count; `build_chain(threads=...)` sets one (default
 a zone1 build measured 27 s at 6 threads and 36 s at 12 for 2000 particles,
 and 44 s at 8 and 47 s at 12 for 5000 -- so try `serve.py --threads`.
 
-`serving/serve.py` serves the chain's variables as PVs through `lume-pva`:
-both zones' params read-write by default (`--read-only` to lock them),
+`twin/serve.py` serves the chain's variables as PVs through `lume-pva`:
+both zones' params read-write,
 each zone's three diagnostics read-only.
 
 `phoebus/generate_zone_twin_display.py` generates a to-scale, clickable
@@ -88,9 +88,13 @@ in `twin/sources/`.
 From this directory:
 
 ```bash
-cd serving
-python serve.py
+cd twin
+python serve.py --threads 8 --n-particles 2000
 ```
+
+`--threads` sets the RF-Track thread count and `--n-particles` the number of
+macroparticles zone1 tracks; both are optional and the values shown are the
+defaults.
 
 Wait for `serving 65 variables` (zone1's first build -- field-map I/O,
 autophase, and a space-charge-tracked run -- takes tens of seconds at the
@@ -150,8 +154,8 @@ To stop, press Ctrl-C in the server terminal and close Phoebus.
 
 - Zone1's space-charge-tracked run is slow: tens of seconds at the default
   2000 particles, scaling with particle count. Every
-  zone1 PV put pays this cost; a `--wait-for-puts` scan client needs a
-  timeout well past it.
+  zone1 PV put pays this cost; a put is acknowledged at once, so a client
+  that needs the result must wait for the status PV to return to `Idle`.
 - Zone1's setpoints are all construction-time parameters (solenoid
   currents and cavity fields are baked into field-map arrays when the
   element is built), so a zone1 change always rebuilds and re-tracks the

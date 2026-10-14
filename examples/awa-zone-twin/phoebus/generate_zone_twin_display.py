@@ -1,19 +1,23 @@
 """Generate `zone_twin.bob`, a to-scale, clickable synoptic of the AWA
-zone1->zone2 twin served by `serving/serve.py`.
+zone1->zone2 twin served by `twin/serve.py`.
 
 Each element is drawn as a colored button at its real position
-along the beamline; clicking it opens a small, reusable, generic editor
-`.bob` for that device *kind* (`solenoid_controls.bob`,
+along the beamline; clicking it selects that element in the editor panel
+beside the screen images. The panel holds one `embedded` widget per
+element, all at the same spot, each showing a small, reusable, generic
+editor `.bob` for that device *kind* (`solenoid_controls.bob`,
 `cavity_controls.bob`, `corrector_controls.bob`, `quad_controls.bob`),
 parameterized by macros carrying that element's own served PV names --
-the same file serves every solenoid, cavity, etc., just opened with
-different macro values. A screen opens `screen_view.bob`, an `image`
+the same file serves every solenoid, cavity, etc., just loaded with
+different macro values. A button writes its element's name to the local
+PV `loc://selected_element`, and a rule on each embedded widget shows it
+only while that PV holds its element's name. A screen shows `screen_view.bob`, an `image`
 widget on its own `<name>_image` PV (a 2D histogram `Zone1Model`/
 `Zone2Model` compute from `get_bunch_at_screens()`). A bare drift is
 not drawn at all.
 
 Positions and widths come straight from `zone_model`'s own loaded
-`ZONE1_MODULE["ELEMENTS"]`/`ZONE2_MODULE["ELEMENTS"]` -- the exact
+`ZONE1_MODULE.ELEMENTS`/`ZONE2_MODULE.ELEMENTS` -- the exact
 generated element tables `zone_model.py` itself builds from. Each element's
 `elemedge` is each element's *absolute* position for zone1 (a Volume,
 placed at arbitrary, even overlapping z) and each element's *start*
@@ -36,6 +40,7 @@ import sys
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from pykern.pkcollections import PKDict
 from rslume.rftrack_units import UNITS
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "twin"))
@@ -46,8 +51,8 @@ from zone_model import (  # noqa: E402
     ZONE2_MODULE,
 )
 
-ZONE1_ELEMENTS = ZONE1_MODULE["ELEMENTS"]
-ZONE2_ELEMENTS = ZONE2_MODULE["ELEMENTS"]
+ZONE1_ELEMENTS = ZONE1_MODULE.ELEMENTS
+ZONE2_ELEMENTS = ZONE2_MODULE.ELEMENTS
 
 DEFAULT_PREFIX = "AWA:SIM:"  # the PV prefix serve.py uses; the display macro P replaces it
 
@@ -62,13 +67,13 @@ _SCREEN_VIEW_WIDTH = 500
 _SCREEN_VIEW_HEIGHT = 540
 _SCREEN_TAB_WIDTH = 140
 
-COLORS = {
-    "cavity": (220, 60, 60),
-    "solenoid": (60, 120, 220),
-    "corrector": (200, 60, 200),
-    "quadrupole": (255, 140, 0),
-    "screen": (0, 190, 120),
-}
+COLORS = PKDict(
+    cavity=(220, 60, 60),
+    solenoid=(60, 120, 220),
+    corrector=(200, 60, 200),
+    quadrupole=(255, 140, 0),
+    screen=(0, 190, 120),
+)
 
 # The generated per-element `kind` string -> this display's drawing group
 # (color/editor). Anything not listed (drift, bpm, rbend, ...) isn't
@@ -86,13 +91,46 @@ _KIND_GROUP = {
     "screen": "screen",
 }
 
-# group -> editor file. The macros each one needs are built per-element
-# by _element_macros() below, not a fixed dict here.
-EDITOR_FILE = {
-    "cavity": "cavity_controls.bob",
-    "solenoid": "solenoid_controls.bob",
-    "corrector": "corrector_controls.bob",
-    "quadrupole": "quad_controls.bob",
+# The PV the element buttons write and the embedded editors' rules watch.
+_SELECTED_PV = 'loc://selected_element("")'
+
+_EDITOR_WIDTH = 370
+
+# group -> (editor title, editor file, [(label, macro, unit, format), ...]).
+# The macros each editor needs are built per-element by _element_macros()
+# below, not a fixed dict here.
+_EDITORS = {
+    # The scale factor is ~1e-4, so it is shown and entered in
+    # exponential notation.
+    "solenoid": (
+        "Solenoid",
+        "solenoid_controls.bob",
+        [("Field scale factor", "SCALE", "", "exponential")],
+    ),
+    # POWER is RF_Track's own P_actual, in W: the field amplitude
+    # scales as sqrt(P_actual / P_map). (build_model() has no live
+    # setter for an absolute V/m value.)
+    "cavity": (
+        "Cavity",
+        "cavity_controls.bob",
+        [
+            ("Power", "POWER", UNITS.p_actual, "decimal"),
+            ("Phase", "PHASE", UNITS.phid, "decimal"),
+        ],
+    ),
+    "corrector": (
+        "Corrector",
+        "corrector_controls.bob",
+        [
+            ("Horizontal", "H", UNITS.hkick, "decimal"),
+            ("Vertical", "V", UNITS.vkick, "decimal"),
+        ],
+    ),
+    "quadrupole": (
+        "Quadrupole",
+        "quad_controls.bob",
+        [("Strength k1", "K1", UNITS.k1, "decimal")],
+    ),
 }
 
 
@@ -116,6 +154,26 @@ def _element_macros(group, e):
     if group == "quadrupole":
         return {"NAME": name, "K1": f"{name}_k1"}
     raise AssertionError(f"unsupported group={group!r}")
+
+
+def _visible_rule(shown_for):
+    """A `rules` block that shows its widget while `_SELECTED_PV` equals
+    `shown_for` and hides it otherwise.
+    """
+    q = escape(f'"{shown_for}"', {'"': "&quot;"})
+    return (
+        f'    <rules>\n'
+        f'      <rule name="Selected" prop_id="visible" out_exp="false">\n'
+        f'        <exp bool_exp="pvStr0 == {q}">\n'
+        f"          <value>true</value>\n"
+        f"        </exp>\n"
+        f'        <exp bool_exp="pvStr0 != {q}">\n'
+        f"          <value>false</value>\n"
+        f"        </exp>\n"
+        f"        <pv_name>{escape(_SELECTED_PV)}</pv_name>\n"
+        f"      </rule>\n"
+        f"    </rules>\n"
+    )
 
 
 class _Display:
@@ -159,6 +217,17 @@ class _Display:
             f"  </widget>"
         )
 
+    def placeholder(self, name, text, x, y, w, h=22):
+        """A label shown only while nothing is selected."""
+        self._widgets.append(
+            f'  <widget type="label" version="2.0.0">\n'
+            f"    <name>{self._unique(name)}</name>\n"
+            f"    <text>{escape(text)}</text>\n"
+            f"    <x>{x}</x><y>{y}</y><width>{w}</width><height>{h}</height>\n"
+            f"{_visible_rule('')}"
+            f"  </widget>"
+        )
+
     def led(self, name, pv, x, y, w=20, h=20):
         self._widgets.append(
             f'  <widget type="led" version="2.0.0">\n'
@@ -181,17 +250,32 @@ class _Display:
             f"  </widget>"
         )
 
-    def button(self, name, x, y, w, h, rgb, file, macros, tooltip):
-        r, g, b = rgb
+    def embedded(self, name, x, y, w, h, file, macros, shown_for):
+        """An `embedded` display of `file` with `macros`, visible only
+        while `_SELECTED_PV` holds `shown_for`.
+        """
         macro_xml = "".join(f"<{k}>{escape(v)}</{k}>" for k, v in macros.items())
+        self._widgets.append(
+            f'  <widget type="embedded" version="2.0.0">\n'
+            f"    <name>{self._unique(name)}</name>\n"
+            f"    <file>{escape(file)}</file>\n"
+            f"    <macros>{macro_xml}</macros>\n"
+            f"    <x>{x}</x><y>{y}</y><width>{w}</width><height>{h}</height>\n"
+            f"    <visible>false</visible>\n"
+            f"{_visible_rule(shown_for)}"
+            f"  </widget>"
+        )
+
+    def select_button(self, name, x, y, w, h, rgb, element, tooltip):
+        """A button that writes `element` to `_SELECTED_PV`."""
+        r, g, b = rgb
         self._widgets.append(
             f'  <widget type="action_button" version="3.0.0">\n'
             f"    <name>{self._unique(name)}</name>\n"
             f"    <actions>\n"
-            f'      <action type="open_display">\n'
-            f"        <file>{escape(file)}</file>\n"
-            f"        <macros>{macro_xml}</macros>\n"
-            f"        <target>window</target>\n"
+            f'      <action type="write_pv">\n'
+            f"        <pv_name>{escape(_SELECTED_PV)}</pv_name>\n"
+            f"        <value>{escape(element)}</value>\n"
             f"        <description>{escape(tooltip)}</description>\n"
             f"      </action>\n"
             f"    </actions>\n"
@@ -260,7 +344,7 @@ def _zone1_layout():
             continue
         width = e.get("l") or _DISPLAY_WIDTH_M.get(group, 0.1)
         layout.append((e.elemedge, width, group, e))
-    return layout, float(ZONE1_MODULE["SETTINGS"].tracking_range_m[1])
+    return layout, float(ZONE1_MODULE.SETTINGS.tracking_range_m[1])
 
 
 def _zone2_layout(start_s):
@@ -291,13 +375,12 @@ def _draw_element(d, px_per_m, s_center, width_m, group, e):
     if group == "screen":
         # not clickable: a screen's image is selected from the ScreenTabs
         # navtabs strip below, not from the floor plan.
-        d.rect(f"rect_{name}", x, AXIS_Y - 30, 4, 60, COLORS["screen"])
+        d.rect(f"rect_{name}", x, AXIS_Y - 30, 4, 60, COLORS.screen)
         d.label(f"lbl_{name}", name, x - 6, AXIS_Y - 95, 16, 56, rotated=True)
         return
-    file = EDITOR_FILE[group]
     macros = _element_macros(group, e)
     tooltip = f"{name}: " + ", ".join(f"{m}={v}" for m, v in macros.items() if m != "NAME")
-    d.button(f"btn_{name}", x, AXIS_Y - 35, w, 70, COLORS[group], file, macros, tooltip)
+    d.select_button(f"btn_{name}", x, AXIS_Y - 35, w, 70, COLORS[group], name, tooltip)
     d.label(f"lbl_{name}", name, x - 6, AXIS_Y - 100, 16, 56, rotated=True)
 
 
@@ -309,7 +392,7 @@ def build() -> str:
 
     d = _Display(X0 + WIDTH_PX + 40, AXIS_Y + 200)
 
-    d.label("Title", "AWA zone1 -> zone2 twin (click an element for controls)",
+    d.label("Title", "AWA zone1 -> zone2 twin (click an element to edit it)",
              X0, 10, 700, 28, bold=True, size=16.0)
     d.label("StatusLabel", "Twin:", X0 + WIDTH_PX - 220, 12, 50, bold=True)
     d.led("StatusLed", "STATUS", X0 + WIDTH_PX - 170, 12)
@@ -380,46 +463,40 @@ def build() -> str:
         tab_width=_SCREEN_TAB_WIDTH,
     )
 
+    # The element editor, beside the screen images: every drawn element's
+    # editor sits at this one spot, and only the selected one is visible.
+    ex = X0 + _SCREEN_TAB_WIDTH + _SCREEN_VIEW_WIDTH + 30
+    d.label("EditorHeader", "Element editor", ex, y - 28, 300, 22, bold=True)
+    d.placeholder("EditorHint", "Click an element above to edit it.", ex, y, _EDITOR_WIDTH)
+    for _, _, group, e in zone1_elements + zone2_elements:
+        if group == "screen":
+            continue
+        _, file, fields = _EDITORS[group]
+        d.embedded(
+            f"editor_{e.name}", ex, y, _EDITOR_WIDTH, _editor_height(fields),
+            file, _element_macros(group, e), e.name,
+        )
+
     d.height = y + _SCREEN_VIEW_HEIGHT + 20
     return d.xml()
 
 
 def _write_editor_templates(out_dir: Path) -> None:
     """The four reusable, generic per-device-kind editor `.bob` files that
-    `build()`'s buttons open. Each is parameterized by macros carrying the
-    PV name to control -- not a device name formatted into a fixed
-    pattern -- so the same file serves every device of that kind.
+    `build()` embeds, plus the screen viewer. Each editor is parameterized
+    by macros carrying the PV to control -- not a device name formatted
+    into a fixed pattern -- so the same file serves every device of that
+    kind.
     """
-    templates = {
-        # The scale factor is ~1e-4, so it is shown and entered in
-        # exponential notation.
-        "solenoid_controls.bob": _editor(
-            "Solenoid", [("Field scale factor", "SCALE", "", "exponential")]
-        ),
-        # POWER is RF_Track's own P_actual, in W: the field amplitude
-        # scales as sqrt(P_actual / P_map). (build_model() has no live
-        # setter for an absolute V/m value; see its own docstring.)
-        "cavity_controls.bob": _editor(
-            "Cavity",
-            [
-                ("Power", "POWER", UNITS["p_actual"], "decimal"),
-                ("Phase", "PHASE", UNITS["phid"], "decimal"),
-            ],
-        ),
-        "corrector_controls.bob": _editor(
-            "Corrector",
-            [
-                ("Horizontal", "H", UNITS["hkick"], "decimal"),
-                ("Vertical", "V", UNITS["vkick"], "decimal"),
-            ],
-        ),
-        "quad_controls.bob": _editor(
-            "Quadrupole", [("Strength k1", "K1", UNITS["k1"], "decimal")]
-        ),
-        "screen_view.bob": _screen_view(),
-    }
+    templates = {file: _editor(title, fields) for title, file, fields in _EDITORS.values()}
+    templates["screen_view.bob"] = _screen_view()
     for filename, xml in templates.items():
         (out_dir / filename).write_text(xml)
+
+
+def _editor_height(fields) -> int:
+    """The height of `_editor(title, fields)`."""
+    return 50 + 66 * len(fields) + 10
 
 
 def _editor(title: str, fields) -> str:
@@ -427,8 +504,8 @@ def _editor(title: str, fields) -> str:
     in `fields`, a label, a text entry (it writes the PV once, on Enter,
     so one edit starts one simulation), its unit, and a readback, all on
     `pva://$(P=AWA:SIM:)$(<macro>)`. `format` is `"decimal"` or
-    `"exponential"`. `title` names the window; `$(NAME)` (set by the
-    button that opens it) is the element's name and appears in it too.
+    `"exponential"`. `$(NAME)` (set by the embedding widget) is the
+    element's name and appears in the title.
     """
     format_index = {"decimal": 1, "exponential": 2}
     y = 50
@@ -474,7 +551,7 @@ def _editor(title: str, fields) -> str:
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <display version="2.0.0">
   <name>{escape(title)} $(NAME)</name>
-  <width>370</width>
+  <width>{_EDITOR_WIDTH}</width>
   <height>{y + 10}</height>
   <widget type="label" version="2.0.0">
     <name>Title</name>

@@ -107,7 +107,7 @@ def build_model(elements, volume, bunch):
                     element_name=spec.name,
                     attribute="gradient",
                     default_value=e.get_gradient(),
-                    unit=UNITS["gradient"],
+                    unit=UNITS.gradient,
                 )
             )
         elif spec.kind == "quadrupole_k1":
@@ -117,7 +117,7 @@ def build_model(elements, volume, bunch):
                     element_name=spec.name,
                     attribute="strength",
                     default_value=e.get_strength(),
-                    unit=UNITS["k1"],
+                    unit=UNITS.k1,
                 )
             )
         elif spec.kind == "solenoid_analytic":
@@ -127,7 +127,7 @@ def build_model(elements, volume, bunch):
                     element_name=spec.name,
                     attribute="max_current",
                     default_value=e.get_max_current(),
-                    unit=UNITS["max_current"],
+                    unit=UNITS.max_current,
                 )
             )
         elif spec.kind == "rbend":
@@ -137,7 +137,7 @@ def build_model(elements, volume, bunch):
                     element_name=spec.name,
                     attribute="angle",
                     default_value=e.get_angle(),
-                    unit=UNITS["angle"],
+                    unit=UNITS.angle,
                 )
             )
         elif spec.kind == "corrector":
@@ -149,7 +149,7 @@ def build_model(elements, volume, bunch):
                     attribute="strength",
                     index=0,
                     default_value=float(hkick),
-                    unit=UNITS["hkick"],
+                    unit=UNITS.hkick,
                 )
             )
             variables.append(
@@ -159,7 +159,7 @@ def build_model(elements, volume, bunch):
                     attribute="strength",
                     index=1,
                     default_value=float(vkick),
-                    unit=UNITS["vkick"],
+                    unit=UNITS.vkick,
                 )
             )
         elif spec.kind in ("cavity_analytic", "cavity_fieldmap", "cavity_fieldmap_2d"):
@@ -169,7 +169,7 @@ def build_model(elements, volume, bunch):
                     element_name=spec.name,
                     attribute="phid",
                     default_value=e.get_phid(),
-                    unit=UNITS["phid"],
+                    unit=UNITS.phid,
                 )
             )
             if spec.kind in ("cavity_fieldmap", "cavity_fieldmap_2d"):
@@ -179,7 +179,7 @@ def build_model(elements, volume, bunch):
                         element_name=spec.name,
                         attribute="P_actual",
                         default_value=e.get_P_actual(),
-                        unit=UNITS["p_actual"],
+                        unit=UNITS.p_actual,
                     )
                 )
     return LUMERFTrackModel(simulator=simulator, action_variables=variables)
