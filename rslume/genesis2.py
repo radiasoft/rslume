@@ -3,12 +3,12 @@
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
+import beamphysics.interfaces.genesis
+import beamphysics.particles
+import beamphysics.units
 import genesis.genesis2
 import numpy
 import os
-import pmd_beamphysics.interfaces.genesis
-import pmd_beamphysics.particles
-import pmd_beamphysics.units
 
 
 class Genesis2(genesis.genesis2.Genesis2):
@@ -21,8 +21,8 @@ class Genesis2(genesis.genesis2.Genesis2):
             return None
         d = self.output["data"]["dpa"]
         d[:, 1, :] -= numpy.min(d[:, 1, :])
-        v = pmd_beamphysics.particles.ParticleGroup(
-            data=pmd_beamphysics.interfaces.genesis.genesis2_dpa_to_data(
+        v = beamphysics.particles.ParticleGroup(
+            data=beamphysics.interfaces.genesis.genesis2_dpa_to_data(
                 d,
                 xlamds=self["xlamds"],
                 current=self.output["data"]["current"],
@@ -49,7 +49,7 @@ class Genesis2(genesis.genesis2.Genesis2):
         d[0] = particle_group.gamma
         d[1] = (
             -particle_group.t
-            * pmd_beamphysics.units.c_light
+            * beamphysics.units.c_light
             * 2
             * numpy.pi
             / self["xlamds"]

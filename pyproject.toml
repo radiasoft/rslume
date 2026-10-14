@@ -18,8 +18,13 @@ classifiers = [
 ]
 dependencies = [
     "pykern",
+    "h5py",
     "lume-base",
     "lume-genesis @ git+https://github.com/slaclab/lume-genesis.git",
+    "numpy",
+    "openpmd-beamphysics>=0.15.1",
+    "RF-Track",
+    "scipy",
     "sirepo",
 ]
 description = "RadiaSoft adapter for Lume"

@@ -6,7 +6,8 @@
 
 
 def test_archive():
-    from pykern import pkio, pkunit, pkdebug
+    from pykern import pkio, pkunit
+    import beamphysics.tools
     import numpy
     import rslume.elegant
 
@@ -44,14 +45,21 @@ def test_archive():
         E2 = rslume.Elegant()
         E2.load_archive(a)
         pkunit.pkeq(E.output.stats.betax[-1], E2.output.stats.betax[-1])
-        pkunit.pkeq(E.output.particles.W1, E2.output.particles.W1)
+        # beamphysics's own dedicated comparison utility, for a clearer
+        # failure message than ParticleGroup.__eq__'s bare True/False.
+        pkunit.pkok(
+            beamphysics.tools.data_are_equal(
+                E.output.particles.W1.data, E2.output.particles.W1.data
+            ),
+            "W1 particle data differs after archive round-trip",
+        )
         pkunit.pkeq(
             E._input.models.bunch.p_central_mev, E2._input.models.bunch.p_central_mev
         )
 
 
 def test_labels():
-    from pykern import pkio, pkunit, pkdebug
+    from pykern import pkunit
     from rslume.elegant import ElegantLabel
 
     for case in (

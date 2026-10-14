@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<display version="2.0.0">
+  <name>Corrector $(NAME)</name>
+  <width>370</width>
+  <height>192</height>
+  <widget type="label" version="2.0.0">
+    <name>Title</name>
+    <text>Corrector: $(NAME)</text>
+    <x>20</x><y>10</y><width>330</width><height>28</height>
+    <font><font family="Liberation Sans" style="BOLD" size="16.0"/></font>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_H</name>
+    <text>Horizontal</text>
+    <x>20</x><y>50</y><width>130</width><height>25</height>
+  </widget>
+  <widget type="textentry" version="3.0.0">
+    <name>Entry_H</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(H)</pv_name>
+    <x>155</x><y>50</y><width>120</width><height>25</height>
+    <format>1</format>
+    <precision>4</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Unit_H</name>
+    <text>T*mm</text>
+    <x>280</x><y>50</y><width>70</width><height>25</height>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>RBLabel_H</name>
+    <text>readback:</text>
+    <x>20</x><y>80</y><width>130</width><height>20</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>RB_H</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(H)</pv_name>
+    <x>155</x><y>80</y><width>120</width><height>20</height>
+    <format>1</format>
+    <precision>4</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_V</name>
+    <text>Vertical</text>
+    <x>20</x><y>116</y><width>130</width><height>25</height>
+  </widget>
+  <widget type="textentry" version="3.0.0">
+    <name>Entry_V</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(V)</pv_name>
+    <x>155</x><y>116</y><width>120</width><height>25</height>
+    <format>1</format>
+    <precision>4</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Unit_V</name>
+    <text>T*mm</text>
+    <x>280</x><y>116</y><width>70</width><height>25</height>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>RBLabel_V</name>
+    <text>readback:</text>
+    <x>20</x><y>146</y><width>130</width><height>20</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>RB_V</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(V)</pv_name>
+    <x>155</x><y>146</y><width>120</width><height>20</height>
+    <format>1</format>
+    <precision>4</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+</display>

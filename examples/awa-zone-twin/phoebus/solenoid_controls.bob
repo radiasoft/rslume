@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<display version="2.0.0">
+  <name>Solenoid $(NAME)</name>
+  <width>370</width>
+  <height>126</height>
+  <widget type="label" version="2.0.0">
+    <name>Title</name>
+    <text>Solenoid: $(NAME)</text>
+    <x>20</x><y>10</y><width>330</width><height>28</height>
+    <font><font family="Liberation Sans" style="BOLD" size="16.0"/></font>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_SCALE</name>
+    <text>Field scale factor</text>
+    <x>20</x><y>50</y><width>130</width><height>25</height>
+  </widget>
+  <widget type="textentry" version="3.0.0">
+    <name>Entry_SCALE</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(SCALE)</pv_name>
+    <x>155</x><y>50</y><width>120</width><height>25</height>
+    <format>2</format>
+    <precision>4</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Unit_SCALE</name>
+    <text></text>
+    <x>280</x><y>50</y><width>70</width><height>25</height>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>RBLabel_SCALE</name>
+    <text>readback:</text>
+    <x>20</x><y>80</y><width>130</width><height>20</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>RB_SCALE</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(SCALE)</pv_name>
+    <x>155</x><y>80</y><width>120</width><height>20</height>
+    <format>2</format>
+    <precision>4</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+</display>

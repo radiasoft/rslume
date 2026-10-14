@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<display version="2.0.0">
+  <name>Cavity $(NAME)</name>
+  <width>370</width>
+  <height>192</height>
+  <widget type="label" version="2.0.0">
+    <name>Title</name>
+    <text>Cavity: $(NAME)</text>
+    <x>20</x><y>10</y><width>330</width><height>28</height>
+    <font><font family="Liberation Sans" style="BOLD" size="16.0"/></font>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_POWER</name>
+    <text>Power</text>
+    <x>20</x><y>50</y><width>130</width><height>25</height>
+  </widget>
+  <widget type="textentry" version="3.0.0">
+    <name>Entry_POWER</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(POWER)</pv_name>
+    <x>155</x><y>50</y><width>120</width><height>25</height>
+    <format>1</format>
+    <precision>4</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Unit_POWER</name>
+    <text>W</text>
+    <x>280</x><y>50</y><width>70</width><height>25</height>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>RBLabel_POWER</name>
+    <text>readback:</text>
+    <x>20</x><y>80</y><width>130</width><height>20</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>RB_POWER</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(POWER)</pv_name>
+    <x>155</x><y>80</y><width>120</width><height>20</height>
+    <format>1</format>
+    <precision>4</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_PHASE</name>
+    <text>Phase</text>
+    <x>20</x><y>116</y><width>130</width><height>25</height>
+  </widget>
+  <widget type="textentry" version="3.0.0">
+    <name>Entry_PHASE</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(PHASE)</pv_name>
+    <x>155</x><y>116</y><width>120</width><height>25</height>
+    <format>1</format>
+    <precision>4</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Unit_PHASE</name>
+    <text>deg</text>
+    <x>280</x><y>116</y><width>70</width><height>25</height>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>RBLabel_PHASE</name>
+    <text>readback:</text>
+    <x>20</x><y>146</y><width>130</width><height>20</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>RB_PHASE</name>
+    <pv_name>pva://$(P=AWA:SIM:)$(PHASE)</pv_name>
+    <x>155</x><y>146</y><width>120</width><height>20</height>
+    <format>1</format>
+    <precision>4</precision>
+    <precision_from_pv>false</precision_from_pv>
+    <show_units>false</show_units>
+  </widget>
+</display>
