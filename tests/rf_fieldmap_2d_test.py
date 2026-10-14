@@ -26,7 +26,15 @@ def _build_cavity(rft, numpy):
     cav = rft.RF_FieldMap_2d(
         (1e5 * numpy.cos(z)[:, None] * r[None, :]).astype(complex),
         (1e6 * numpy.sin(z)[:, None] * (1 - 0.3 * r[None, :])).astype(complex),
-        0, 0, 0.005, 0.02, -1, 3e9, 1.0, 1.0, 1.0,
+        0,
+        0,
+        0.005,
+        0.02,
+        -1,
+        3e9,
+        1.0,
+        1.0,
+        1.0,
     )
     cav.set_name("C1")
     cav.set_phid(15.0)
@@ -47,8 +55,17 @@ def test_serialize_does_not_double_apply_phid():
     pkunit.pkeq(orig_phid, cav.get_phid())
 
     rebuilt = rft.RF_FieldMap_2d(
-        d["er"], d["ez"], 0, 0, d["hr"], d["hz"], -1, d["frequency"],
-        d["direction"], d["p_map"], d["p_actual"],
+        d["er"],
+        d["ez"],
+        0,
+        0,
+        d["hr"],
+        d["hz"],
+        -1,
+        d["frequency"],
+        d["direction"],
+        d["p_map"],
+        d["p_actual"],
     )
     rebuilt.set_phid(d["phid"])
 
@@ -96,9 +113,7 @@ def test_archive_round_trip():
         pkunit.pkeq("RF_FieldMap_2d", f["elements"]["0"].attrs["class"])
         # a shared "field_maps" dataset, referenced by "@<md5>" --
         # see RFTrackSimulator.archive()'s own docstring
-        pkunit.pkeq(
-            (11, 6), f["field_maps"][f["elements"]["0"].attrs["ez"][1:]].shape
-        )
+        pkunit.pkeq((11, 6), f["field_maps"][f["elements"]["0"].attrs["ez"][1:]].shape)
 
     reloaded = RFTrackSimulator()
     rft.rng_set_seed(5489)

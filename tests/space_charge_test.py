@@ -43,7 +43,9 @@ def test_loaded_archive_needs_apply_space_charge():
     original = _build_simulator(rft)
     apply_space_charge(original.beamline, _SETTINGS)
     with_sc = _sigma_x(original)
-    pkunit.pkok(with_sc > 10 * without, "expected space charge: {} vs {}", with_sc, without)
+    pkunit.pkok(
+        with_sc > 10 * without, "expected space charge: {} vs {}", with_sc, without
+    )
     original.archive(path, space_charge=_SETTINGS)
 
     loaded = RFTrackSimulator()

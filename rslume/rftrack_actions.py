@@ -52,14 +52,18 @@ class RFTrackReadOnlyActionMixin(RFTrackWritableActionMixin, ReadOnlyActionMixin
     read_only = True
 
     def _set(self, simulator, value):
-        raise ReadOnlyError("RFTrackReadOnlyActionMixin does not support setting values.")
+        raise ReadOnlyError(
+            "RFTrackReadOnlyActionMixin does not support setting values."
+        )
 
 
 class RFTrackWritableScalarVariable(ScalarVariable, RFTrackWritableActionMixin):
     """Writable scalar variable for an RF-Track element attribute."""
 
 
-class RFTrackWritableVectorComponentVariable(ScalarVariable, RFTrackWritableActionMixin):
+class RFTrackWritableVectorComponentVariable(
+    ScalarVariable, RFTrackWritableActionMixin
+):
     """Writable scalar variable for one component of a vector-valued
     RF-Track element attribute (e.g. ``Corrector.strength`` ->
     ``[hkick, vkick]``).

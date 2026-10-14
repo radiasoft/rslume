@@ -84,7 +84,9 @@ def test_volume_archive_round_trip():
         # rslume.rftrack_archive.archive()'s own docstring (_dedupe_field_maps)
         pkunit.pkeq(21, len(f["field_maps"][f["elements"]["0"].attrs["ez"][1:]]))
 
-    pkunit.pkeq(10.0, original.beamline[0].get_phid(), "archive() must not mutate beamline")
+    pkunit.pkeq(
+        10.0, original.beamline[0].get_phid(), "archive() must not mutate beamline"
+    )
 
     reloaded = RFTrackSimulator()
     rft.rng_set_seed(5489)

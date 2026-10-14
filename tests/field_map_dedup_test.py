@@ -56,17 +56,22 @@ def test_field_map_dedup():
     with h5py.File(path, "r") as f:
         # one shared dataset, not three byte-for-byte duplicates
         pkunit.pkeq(1, len(f["field_maps"]))
-        refs = {f["elements"][str(i)].attrs["name"]: f["elements"][str(i)].attrs["ez"] for i in range(3)}
+        refs = {
+            f["elements"][str(i)].attrs["name"]: f["elements"][str(i)].attrs["ez"]
+            for i in range(3)
+        }
         pkunit.pkeq(3, len(refs))
-        pkunit.pkeq(1, len({v for v in refs.values()}), "all three should reference the same array")
+        pkunit.pkeq(
+            1,
+            len({v for v in refs.values()}),
+            "all three should reference the same array",
+        )
 
     reloaded = RFTrackSimulator()
     reloaded.load_archive(path)
     pkunit.pkeq(3, reloaded.beamline.size())
     for i in range(3):
-        pkunit.pkeq(
-            original.beamline[i].get_phid(), reloaded.beamline[i].get_phid()
-        )
+        pkunit.pkeq(original.beamline[i].get_phid(), reloaded.beamline[i].get_phid())
         pkunit.pkeq(
             list(original.beamline[i].get_field(0.0, 0.0, 100.0, 0.0)[0]),
             list(reloaded.beamline[i].get_field(0.0, 0.0, 100.0, 0.0)[0]),

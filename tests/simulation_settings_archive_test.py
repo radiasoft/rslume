@@ -42,7 +42,9 @@ def test_pic_space_charge_and_autophase_round_trip():
     RFTrackSimulator(_build_lattice(rft), _build_bunch(rft)).archive(
         path,
         autophase=True,
-        space_charge=dict(kind="pic", dt_mm=3.0, grid=(8, 8, 16), mirror_m=0.0, smooth=0.5),
+        space_charge=dict(
+            kind="pic", dt_mm=3.0, grid=(8, 8, 16), mirror_m=0.0, smooth=0.5
+        ),
     )
 
     reloaded = RFTrackSimulator()

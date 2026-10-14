@@ -54,7 +54,9 @@ from zone_model import (  # noqa: E402
 ZONE1_ELEMENTS = ZONE1_MODULE.ELEMENTS
 ZONE2_ELEMENTS = ZONE2_MODULE.ELEMENTS
 
-DEFAULT_PREFIX = "AWA:SIM:"  # the PV prefix serve.py uses; the display macro P replaces it
+DEFAULT_PREFIX = (
+    "AWA:SIM:"  # the PV prefix serve.py uses; the display macro P replaces it
+)
 
 X0, AXIS_Y, WIDTH_PX = 30, 160, 1200
 
@@ -162,7 +164,7 @@ def _visible_rule(shown_for):
     """
     q = escape(f'"{shown_for}"', {'"': "&quot;"})
     return (
-        f'    <rules>\n'
+        f"    <rules>\n"
         f'      <rule name="Selected" prop_id="visible" out_exp="false">\n'
         f'        <exp bool_exp="pvStr0 == {q}">\n'
         f"          <value>true</value>\n"
@@ -296,7 +298,9 @@ class _Display:
             f"\n      <tab>\n"
             f"        <name>{escape(tab_name)}</name>\n"
             f"        <file>{escape(file)}</file>\n"
-            f"        <macros>" + "".join(f"<{k}>{escape(v)}</{k}>" for k, v in macros.items()) + "</macros>\n"
+            f"        <macros>"
+            + "".join(f"<{k}>{escape(v)}</{k}>" for k, v in macros.items())
+            + "</macros>\n"
             f"        <group_name></group_name>\n"
             f"      </tab>"
             for tab_name, file, macros in tabs
@@ -379,7 +383,9 @@ def _draw_element(d, px_per_m, s_center, width_m, group, e):
         d.label(f"lbl_{name}", name, x - 6, AXIS_Y - 95, 16, 56, rotated=True)
         return
     macros = _element_macros(group, e)
-    tooltip = f"{name}: " + ", ".join(f"{m}={v}" for m, v in macros.items() if m != "NAME")
+    tooltip = f"{name}: " + ", ".join(
+        f"{m}={v}" for m, v in macros.items() if m != "NAME"
+    )
     d.select_button(f"btn_{name}", x, AXIS_Y - 35, w, 70, COLORS[group], name, tooltip)
     d.label(f"lbl_{name}", name, x - 6, AXIS_Y - 100, 16, 56, rotated=True)
 
@@ -392,8 +398,16 @@ def build() -> str:
 
     d = _Display(X0 + WIDTH_PX + 40, AXIS_Y + 200)
 
-    d.label("Title", "AWA zone1 -> zone2 twin (click an element to edit it)",
-             X0, 10, 700, 28, bold=True, size=16.0)
+    d.label(
+        "Title",
+        "AWA zone1 -> zone2 twin (click an element to edit it)",
+        X0,
+        10,
+        700,
+        28,
+        bold=True,
+        size=16.0,
+    )
     d.label("StatusLabel", "Twin:", X0 + WIDTH_PX - 220, 12, 50, bold=True)
     d.led("StatusLed", "STATUS", X0 + WIDTH_PX - 170, 12)
     d.value("StatusText", "STATUS", X0 + WIDTH_PX - 140, 10, 130)
@@ -409,32 +423,43 @@ def build() -> str:
     # zone1/zone2 boundary marker
     boundary_x = X0 + int(zone1_length * px_per_m)
     d.rect("boundary", boundary_x, AXIS_Y - 60, 1, 120, (120, 120, 120))
-    d.label("BoundaryLabel", "zone1 | zone2", boundary_x - 50, AXIS_Y + 65, 100, 18, size=9)
+    d.label(
+        "BoundaryLabel", "zone1 | zone2", boundary_x - 50, AXIS_Y + 65, 100, 18, size=9
+    )
 
     # legend
     ly = AXIS_Y + 110
-    for i, (group, text) in enumerate([
-        ("cavity", "RF cavity (click)"),
-        ("solenoid", "solenoid (click)"),
-        ("corrector", "corrector (click)"),
-        ("quadrupole", "quadrupole (click)"),
-        ("screen", "screen (see tabs below)"),
-    ]):
+    for i, (group, text) in enumerate(
+        [
+            ("cavity", "RF cavity (click)"),
+            ("solenoid", "solenoid (click)"),
+            ("corrector", "corrector (click)"),
+            ("quadrupole", "quadrupole (click)"),
+            ("screen", "screen (see tabs below)"),
+        ]
+    ):
         lx = X0 + i * 230
         d.rect(f"legend_{group}", lx, ly, 20, 20, COLORS[group])
         d.label(f"legend_text_{group}", text, lx + 28, ly - 2, 195, 24, size=14)
 
     # per-zone diagnostics (readbacks only -- not editable, so no button/popup)
     y = ly + 36
-    for prefix, label_text, x in (("zone1_", "Zone 1 exit", X0), ("zone2_", "Zone 2 exit", X0 + WIDTH_PX // 2)):
+    for prefix, label_text, x in (
+        ("zone1_", "Zone 1 exit", X0),
+        ("zone2_", "Zone 2 exit", X0 + WIDTH_PX // 2),
+    ):
         d.label(f"{prefix}DiagHeader", label_text, x, y, 300, 20, bold=True)
-        for i, (field, text) in enumerate((
-            ("charge_pC", "Charge [pC]"),
-            ("energy_MeV", "Energy [MeV]"),
-            ("energy_spread_pct", "Energy spread [% rms]"),
-        )):
+        for i, (field, text) in enumerate(
+            (
+                ("charge_pC", "Charge [pC]"),
+                ("energy_MeV", "Energy [MeV]"),
+                ("energy_spread_pct", "Energy spread [% rms]"),
+            )
+        ):
             d.label(f"{prefix}DiagL{i}", text, x, y + 26 + i * 24, 150)
-            d.value(f"{prefix}DiagV{i}", f"{prefix}{field}", x + 155, y + 26 + i * 24, 110)
+            d.value(
+                f"{prefix}DiagV{i}", f"{prefix}{field}", x + 155, y + 26 + i * 24, 110
+            )
     y += 26 + 3 * 24 + 14
 
     # ScreenTabs: a column of tab buttons (navtabs' own VERTICAL default)
@@ -458,8 +483,12 @@ def build() -> str:
         for name in screens
     ]
     d.navtabs(
-        "ScreenTabs", tabs, X0, y,
-        _SCREEN_TAB_WIDTH + _SCREEN_VIEW_WIDTH, _SCREEN_VIEW_HEIGHT,
+        "ScreenTabs",
+        tabs,
+        X0,
+        y,
+        _SCREEN_TAB_WIDTH + _SCREEN_VIEW_WIDTH,
+        _SCREEN_VIEW_HEIGHT,
         tab_width=_SCREEN_TAB_WIDTH,
     )
 
@@ -467,14 +496,22 @@ def build() -> str:
     # editor sits at this one spot, and only the selected one is visible.
     ex = X0 + _SCREEN_TAB_WIDTH + _SCREEN_VIEW_WIDTH + 30
     d.label("EditorHeader", "Element editor", ex, y - 28, 300, 22, bold=True)
-    d.placeholder("EditorHint", "Click an element above to edit it.", ex, y, _EDITOR_WIDTH)
+    d.placeholder(
+        "EditorHint", "Click an element above to edit it.", ex, y, _EDITOR_WIDTH
+    )
     for _, _, group, e in zone1_elements + zone2_elements:
         if group == "screen":
             continue
         _, file, fields = _EDITORS[group]
         d.embedded(
-            f"editor_{e.name}", ex, y, _EDITOR_WIDTH, _editor_height(fields),
-            file, _element_macros(group, e), e.name,
+            f"editor_{e.name}",
+            ex,
+            y,
+            _EDITOR_WIDTH,
+            _editor_height(fields),
+            file,
+            _element_macros(group, e),
+            e.name,
         )
 
     d.height = y + _SCREEN_VIEW_HEIGHT + 20
@@ -488,7 +525,9 @@ def _write_editor_templates(out_dir: Path) -> None:
     into a fixed pattern -- so the same file serves every device of that
     kind.
     """
-    templates = {file: _editor(title, fields) for title, file, fields in _EDITORS.values()}
+    templates = {
+        file: _editor(title, fields) for title, file, fields in _EDITORS.values()
+    }
     templates["screen_view.bob"] = _screen_view()
     for filename, xml in templates.items():
         (out_dir / filename).write_text(xml)
@@ -512,7 +551,8 @@ def _editor(title: str, fields) -> str:
     widgets = []
     for label, macro, unit, fmt in fields:
         pv = f"pva://$(P={DEFAULT_PREFIX})$({macro})"
-        widgets.append(f"""  <widget type="label" version="2.0.0">
+        widgets.append(
+            f"""  <widget type="label" version="2.0.0">
     <name>Label_{macro}</name>
     <text>{escape(label)}</text>
     <x>20</x><y>{y}</y><width>130</width><height>25</height>
@@ -530,9 +570,11 @@ def _editor(title: str, fields) -> str:
     <name>Unit_{macro}</name>
     <text>{escape(unit)}</text>
     <x>280</x><y>{y}</y><width>70</width><height>25</height>
-  </widget>""")
+  </widget>"""
+        )
         y += 30
-        widgets.append(f"""  <widget type="label" version="2.0.0">
+        widgets.append(
+            f"""  <widget type="label" version="2.0.0">
     <name>RBLabel_{macro}</name>
     <text>readback:</text>
     <x>20</x><y>{y}</y><width>130</width><height>20</height>
@@ -545,7 +587,8 @@ def _editor(title: str, fields) -> str:
     <precision>4</precision>
     <precision_from_pv>false</precision_from_pv>
     <show_units>false</show_units>
-  </widget>""")
+  </widget>"""
+        )
         y += 36
     body = "\n".join(widgets)
     return f"""<?xml version="1.0" encoding="UTF-8"?>

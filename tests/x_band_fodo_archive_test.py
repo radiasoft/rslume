@@ -68,9 +68,11 @@ def test_archive_round_trip():
         o = original.tracked_bunch.get_phase_space(f"%{field}")
         r = reloaded.tracked_bunch.get_phase_space(f"%{field}")
         pkunit.pkok(
-            _relative_diff(o.mean(), r.mean()) < 1e-4
-            if abs(o.mean()) > 1e-9
-            else abs(r.mean()) < 1e-9,
+            (
+                _relative_diff(o.mean(), r.mean()) < 1e-4
+                if abs(o.mean()) > 1e-9
+                else abs(r.mean()) < 1e-9
+            ),
             "{} mean differs too much: original={} reloaded={}",
             field,
             o.mean(),

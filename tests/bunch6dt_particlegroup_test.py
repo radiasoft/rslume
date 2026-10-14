@@ -43,16 +43,23 @@ def test_z_and_t():
     numpy.testing.assert_allclose(
         t_mm_c, b.get_phase_space("%t")[:, 0], err_msg="default t is not the common %t"
     )
-    t0_mm_c = bunch6dt_to_particlegroup(b, snapshot_time=False).t * scipy.constants.c * 1e3
+    t0_mm_c = (
+        bunch6dt_to_particlegroup(b, snapshot_time=False).t * scipy.constants.c * 1e3
+    )
     numpy.testing.assert_allclose(
-        t0_mm_c, b.get_phase_space("%t0")[:, 0], err_msg="snapshot_time=False t is not t0"
+        t0_mm_c,
+        b.get_phase_space("%t0")[:, 0],
+        err_msg="snapshot_time=False t is not t0",
     )
 
 
 def test_round_trip():
     import numpy
     import RF_Track as rft
-    from rslume.rftrack_utils import bunch6dt_to_particlegroup, particlegroup_to_bunch6dt
+    from rslume.rftrack_utils import (
+        bunch6dt_to_particlegroup,
+        particlegroup_to_bunch6dt,
+    )
 
     b = _build_bunch6dt(rft, numpy)
     fields = "%X %Y %Z %Px %Py %Pz %m %Q %N %t0"

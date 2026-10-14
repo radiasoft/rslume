@@ -738,5 +738,3 @@ def _build_element(spec):
     if spec.set_aperture:
         e.set_aperture(spec.aperture_x, spec.aperture_y, spec.aperture_type)
     return e
-
-

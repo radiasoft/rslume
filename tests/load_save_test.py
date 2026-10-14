@@ -19,7 +19,9 @@ def test_load_field_map():
     numpy.testing.assert_allclose(field, [2.0, -8.0, 4.0])
     pkunit.pkeq(0.5, step)
     pkunit.pkeq(1.0, length)
-    field, _, _ = load_field_map(PKDict(file=f, rescale_mode="target", target_field=1.0))
+    field, _, _ = load_field_map(
+        PKDict(file=f, rescale_mode="target", target_field=1.0)
+    )
     numpy.testing.assert_allclose(field, [0.25, -1.0, 0.5])
 
 
@@ -31,7 +33,11 @@ def test_load_field_map_2d():
 
     f = str(pkunit.empty_work_dir().join("map2d.txt"))
     # Z [cm], R [cm], Ez, Er, |E|, H -- Z varies fastest
-    rows = [[z, r, 10.0 * z + r, 100.0 * z + r, 0.0, 0.0] for r in (0.0, 1.0) for z in (0.0, 1.0, 2.0)]
+    rows = [
+        [z, r, 10.0 * z + r, 100.0 * z + r, 0.0, 0.0]
+        for r in (0.0, 1.0)
+        for z in (0.0, 1.0, 2.0)
+    ]
     numpy.savetxt(f, numpy.array(rows))
     er, ez, hr, hz = load_field_map_2d(PKDict(file=f))
     pkunit.pkeq((3, 2), ez.shape)

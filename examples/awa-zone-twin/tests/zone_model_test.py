@@ -60,7 +60,11 @@ def test_handoff_keeps_charge_energy_and_bunch_length():
         a = zone1.get([f"zone1_{name}"])[f"zone1_{name}"]
         b = zone2.get([f"zone2_{name}"])[f"zone2_{name}"]
         pkunit.pkok(
-            abs(a - b) < 1e-3 * abs(a), "{} changed in handoff: zone1={} zone2={}", name, a, b
+            abs(a - b) < 1e-3 * abs(a),
+            "{} changed in handoff: zone1={} zone2={}",
+            name,
+            a,
+            b,
         )
     sigma_z = zone1.model.simulator.tracked_bunch.get_phase_space("%Z")[:, 0].std()
     sigma_t = zone2.model.simulator.initial_bunch.get_phase_space("%t")[:, 0].std()

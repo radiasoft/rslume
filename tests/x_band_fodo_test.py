@@ -148,9 +148,7 @@ def test_cavity_phase_changes_energy_gain():
     )
 
     m.set({"C1_phid": 90.0})
-    gain_quadrature = (
-        m.simulator.tracked_bunch.get_phase_space("%K").mean() - initial_k
-    )
+    gain_quadrature = m.simulator.tracked_bunch.get_phase_space("%K").mean() - initial_k
 
     pkunit.pkok(
         gain_on_crest_ish != gain_quadrature,
@@ -173,6 +171,4 @@ def test_reset_restores_fodo_focusing():
 
     pkunit.pkeq(5.0, m.get("QF_gradient"))
     pkunit.pkeq(-5.0, m.get("QD_gradient"))
-    pkunit.pkeq(
-        sigma_x_fodo, m.simulator.tracked_bunch.get_phase_space("%x").std()
-    )
+    pkunit.pkeq(sigma_x_fodo, m.simulator.tracked_bunch.get_phase_space("%x").std())

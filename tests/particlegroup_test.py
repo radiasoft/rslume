@@ -54,7 +54,9 @@ def test_round_trip():
     bunch = _build_bunch(rft)
     fields = "%x %xp %y %yp %t %P %m %Q %N"
     numpy.testing.assert_allclose(
-        particlegroup_to_bunch6d(bunch6d_to_particlegroup(bunch)).get_phase_space(fields),
+        particlegroup_to_bunch6d(bunch6d_to_particlegroup(bunch)).get_phase_space(
+            fields
+        ),
         bunch.get_phase_space(fields),
         rtol=0,
         atol=1e-6,
@@ -148,9 +150,7 @@ def test_bunch6dt_snapshot_keeps_bunch_length_into_bunch6d():
     v.set_s1(1.0)
     tracked = v.track(b)
 
-    out = particlegroup_to_bunch6d(
-        bunch6dt_to_particlegroup(tracked)
-    )
+    out = particlegroup_to_bunch6d(bunch6dt_to_particlegroup(tracked))
     beta = p_mev / numpy.hypot(p_mev, rft.electronmass)
     expect_sigma_t = tracked.get_phase_space("%Z")[:, 0].std() / beta
     actual_sigma_t = out.get_phase_space("%t")[:, 0].std()

@@ -41,7 +41,9 @@ class RFTrackSimulator:
         """Write `beamline` and `initial_bunch` to `path` as HDF5."""
         from rslume import rftrack_archive
 
-        rftrack_archive.archive(self, path, autophase=autophase, space_charge=space_charge)
+        rftrack_archive.archive(
+            self, path, autophase=autophase, space_charge=space_charge
+        )
 
     def find_element(self, name):
         """Return the beamline element named `name`.

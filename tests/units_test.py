@@ -32,7 +32,12 @@ def test_every_archived_numeric_field_has_a_unit():
         rft.Pillbox_Cavity(numpy.array([1e6]), 3e9, 0.05, 2),
         rft.RF_FieldMap_1d(
             (1e6 * numpy.sin(numpy.linspace(0, numpy.pi, 21))).astype(complex),
-            0.01, 0.2, 1.3e9, 1.0, 1.0, 1.0,
+            0.01,
+            0.2,
+            1.3e9,
+            1.0,
+            1.0,
+            1.0,
         ),
     ]
     elements[1].set_gradient(1.0)
