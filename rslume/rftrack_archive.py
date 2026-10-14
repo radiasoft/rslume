@@ -3,11 +3,9 @@
 `RFTrackSimulator.archive()`/`load_archive()` (`rslume.rftrack_simulator`)
 delegate to :func:`archive`/:func:`load_archive` here: this module holds the
 actual beamline + bunch <-> HDF5 serialization, covering only the
-element classes :data:`_ELEMENT_SERIALIZERS` knows about -- not a
+element classes that have a `_serialize_<class>()` function -- not a
 bespoke format of its own, just RF-Track's own native class/attribute
-names, written as plain, self-describing HDF5 any tool can read. See
-:func:`archive`'s own docstring for the full format and what is/isn't a
-faithful round-trip.
+names, written as plain, self-describing HDF5 any tool can read.
 
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
@@ -15,6 +13,7 @@ faithful round-trip.
 import beamphysics
 import h5py
 import numpy
+import pykern.pkinspect
 import scipy.constants
 from beamphysics.units import pmd_unit, write_unit_h5
 from pykern.pkcollections import PKDict
@@ -40,102 +39,49 @@ def archive(simulator, path, autophase=None, space_charge=None):
     """Write `simulator.beamline` and `simulator.initial_bunch` to `path`
     as HDF5 (called as `RFTrackSimulator.archive()`).
 
-    `autophase` (bool) and `space_charge` (a dict, see below, or
-    `None` for no space charge) record simulation-level settings
-    that have no live equivalent in `rft.cvar` to read back at
-    all: confirmed empirically that `rft.cvar.SC_engine`'s getter
-    is completely type-erased (always the base `SpaceCharge` type,
-    even checked at the raw SWIG object level; calling a
-    concrete-subclass-only method on it fails), and `dir(rft.cvar)`
-    itself returns `[]`, so there's no way to enumerate or identify
-    *any* process-global setting from Python, space charge or
-    otherwise.
+    `path` is also a valid standalone openPMD particle file (readable
+    with `beamphysics.ParticleGroup(h5=path)`). The bunch comes back as
+    the same macroparticles, not a new realization; the random seed is
+    not recorded. An autophased RF element keeps its phase correction,
+    so a reloaded beamline tracks identically without calling
+    `autophase()` again.
 
-    `space_charge` has no such signal to infer from (nothing about
-    an element records whether space charge was active during its
-    own tracking), so it defaults to `simulator.space_charge` -- `None`
-    (not recorded) for a simulator built directly, or whatever
-    `load_archive()` restored, so re-archiving a loaded simulator keeps
-    it -- unless the caller passes it explicitly. `None` always means
-    "use the simulator's", so to archive a loaded simulator *without*
-    space charge, set `simulator.space_charge = None` first. `space_charge`'s shape mirrors the generated script's
-    own `SETTINGS.space_charge`: `{"kind": "p2p"}`, or
-    `{"kind": "pic", "dt_mm": float, "grid": (nx, ny, nz),
-    "mirror_m": float, "smooth": float}`.
+    Args:
+        simulator (RFTrackSimulator): the `Lattice` or `Volume` and the
+            `Bunch6d` or `Bunch6dT` to write
+        path (str): file to write
+        autophase (bool): whether autophase was used; `None` infers it
+            from the cavities' `t0` [None]
+        space_charge (dict): `{"kind": "p2p"}` or `{"kind": "pic",
+            "dt_mm": float, "grid": (nx, ny, nz), "mirror_m": float,
+            "smooth": float}`; `None` uses `simulator.space_charge`
+            [None]. RF-Track cannot report its active space-charge
+            engine, so this cannot be inferred. To archive a loaded
+            simulator without space charge, set
+            `simulator.space_charge = None` first.
 
-    `autophase`, unlike `space_charge`, *is* inferrable: a cavity
-    element's own archived `t0` already tells us whether it was
-    autophase()'d (see `_infer_autophase()`), so `autophase=None`
-    here means "infer it from the elements," not "don't record
-    it" -- the root attr is always written. Pass `True`/`False`
-    explicitly only to override that inference.
+    Raises:
+        NotImplementedError: an element class with no serializer, or a
+            Volume element with a non-identity rotation
 
-    `load_archive()` sets `simulator.autophase`/`simulator.space_charge`
-    from whatever was archived (`simulator.space_charge` is `None` if
-    this wasn't passed at archive time) -- it never acts on them itself
-    (e.g. it doesn't call `autophase()` again or build an
-    `SC_engine`); they're informational for the caller, same as
-    `simulator.beamline`/`simulator.initial_bunch`.
+    The file is plain HDF5, readable without this module:
 
-    `initial_bunch` is written as a real openPMD particle file (via
-    `beamphysics.ParticleGroup.write()`), not a statistical summary
-    -- `path` is simultaneously a valid standalone openPMD file
-    (readable by any openPMD-aware tool, e.g.
-    `beamphysics.ParticleGroup(h5=path)`) and this archive, sharing
-    one HDF5 file. `load_archive()` gets back the exact same
-    macroparticles (modulo float round-trip), not a new
-    statistically-equivalent realization -- unlike the random seed
-    (never recorded: RF-Track's own API has no getter for it,
-    `rng_set_seed()` is write-only), there is nothing approximate
-    about this part of the round trip.
-
-    `initial_bunch` may be either a Bunch6d or a Bunch6dT -- the
-    archived `bunch_type` attr records which, and `load_archive()`
-    rebuilds the matching one (`particlegroup_to_bunch6d()`/
-    `particlegroup_to_bunch6dt()` -- see `_bunch_to_particlegroup()`).
-
-    An RF element that was autophase()'d before archiving (Volume.
-    autophase() sets its `t0` directly; `get_phid()` never reflects
-    that correction -- it always reads back the phid the element
-    was constructed with) is archived faithfully: `t0` is captured
-    per-element, for any class that has it (Pillbox_Cavity,
-    RF_FieldMap_1d, RF_FieldMap_2d, Screen -- confirmed empirically,
-    no other class does), and `load_archive()` restores it with
-    `set_t0()`. Confirmed empirically to reproduce the autophased
-    beamline's own tracked result exactly, without ever calling
-    autophase() again -- `load_archive()` doesn't need to know
-    autophase() was used in the first place.
-
-    Raises `NotImplementedError` if `beamline` contains an element
-    class `_ELEMENT_SERIALIZERS` doesn't know about yet, or a Volume
-    element with a non-identity rotation (see `_serialize_position`).
-
-    The format (root attrs `software="rslume"`, `bunch_type`
-    ("Bunch6d" or "Bunch6dT"), `beamline_class` ("Lattice" or
-    "Volume"), plus `s0`/`s1` for a Volume; a group `elements` of
-    indexed, flat-attrs-or-dataset element groups; a group
-    `field_maps`, present only if any element has an array-valued
-    field, holding one dataset per *unique* array (keyed by its own
-    md5), referenced from an element's attrs as `"@<md5>"` instead
-    of embedding a byte-for-byte duplicate per element (see
-    `_dedupe_field_maps`); a group `units` documenting each element
-    field's RF-Track-native unit, openPMD-style; the bunch itself as
-    a standard openPMD `particles` group, written by
-    `ParticleGroup.write()`) is the actual interchange contract with
-    anything that reads this file -- so it's plain, self-describing
-    HDF5, not something that requires importing this module to read
-    back. Root attrs deliberately
-    exclude a `dataType` of our own: `ParticleGroup.write()` already
-    sets one (`"openPMD"`, via openPMD's own `pmd_init()`) and
-    silently overwrites anything already there under that exact key
-    (confirmed empirically) -- `software`/`bunch_type`/
-    `beamline_class` don't collide with any of openPMD's own root
-    attrs (`basePath`/`dataType`/`openPMD`/`openPMDextension`/
-    `particlesPath`).
+    - root attrs: `software`, `bunch_type`, `beamline_class`,
+      `autophase`, and `s0`/`s1` for a Volume
+    - `elements/<i>`: one group per element, using RF-Track's own
+      class and attribute names
+    - `field_maps`: each unique array-valued field once, keyed by md5
+      and referenced from an element as `"@<md5>"`
+    - `space_charge`: the settings above, if any
+    - `units`: the unit of each element field
+    - `particles`: the bunch, as openPMD
     """
     kind = type(simulator.beamline).__name__
     elements, field_maps = _dedupe_field_maps(
-        [_serialize_element(simulator.beamline[i], kind) for i in range(simulator.beamline.size())]
+        [
+            _element_to_attrs(simulator.beamline[i], kind)
+            for i in range(simulator.beamline.size())
+        ]
     )
     particle_group, bunch_type = _bunch_to_particlegroup(simulator.initial_bunch)
     if autophase is None:
@@ -143,6 +89,8 @@ def archive(simulator, path, autophase=None, space_charge=None):
     if space_charge is None:
         space_charge = simulator.space_charge
     with h5py.File(path, "w") as f:
+        # no dataType attr of our own: ParticleGroup.write() sets (and
+        # would overwrite) openPMD's
         f.attrs["software"] = "rslume"
         f.attrs["bunch_type"] = bunch_type
         f.attrs["beamline_class"] = kind
@@ -161,12 +109,18 @@ def archive(simulator, path, autophase=None, space_charge=None):
             # component (in mm, same as get_offsets(), hence /1000) is
             # the tracking-range value set_s0()/set_s1() itself takes
             # (in meters).
-            f.attrs["s0"] = float(
-                numpy.asarray(simulator.beamline.get_s0().get_origin()).flatten()[2]
-            ) / 1000.0
-            f.attrs["s1"] = float(
-                numpy.asarray(simulator.beamline.get_s1().get_origin()).flatten()[2]
-            ) / 1000.0
+            f.attrs["s0"] = (
+                float(
+                    numpy.asarray(simulator.beamline.get_s0().get_origin()).flatten()[2]
+                )
+                / 1000.0
+            )
+            f.attrs["s1"] = (
+                float(
+                    numpy.asarray(simulator.beamline.get_s1().get_origin()).flatten()[2]
+                )
+                / 1000.0
+            )
         _write_indexed_group(f, "elements", elements)
         if field_maps:
             fm = f.create_group("field_maps")
@@ -183,14 +137,14 @@ def load_archive(simulator, path):
     contents of `path` (as written by `archive()`; called as
     `RFTrackSimulator.load_archive()`), rebuilding a new `rft.Lattice`
     or `rft.Volume` and the exact same macroparticles `archive()`
-    wrote (see its own docstring). Clears `simulator.tracked_bunch`.
+    wrote. Clears `simulator.tracked_bunch`.
 
     Also sets `simulator.autophase`/`simulator.space_charge` from
     whatever `archive()` was given (`None` for either if it wasn't
     passed at archive time) -- purely informational, same as
     `simulator.beamline`/`simulator.initial_bunch`; this never acts on
     them itself (e.g. it doesn't call `autophase()` or build an
-    `SC_engine`).
+    `SC_engine`; call `simulator.apply_space_charge()` for that).
     """
     import RF_Track as rft
 
@@ -202,7 +156,9 @@ def load_archive(simulator, path):
             elements = _resolve_field_map_refs(elements, f["field_maps"])
         s0 = f.attrs.get("s0")
         s1 = f.attrs.get("s1")
-        simulator.autophase = bool(f.attrs["autophase"]) if "autophase" in f.attrs else None
+        simulator.autophase = (
+            bool(f.attrs["autophase"]) if "autophase" in f.attrs else None
+        )
         if "space_charge" in f:
             sc = f["space_charge"]
             simulator.space_charge = PKDict(sc.attrs)
@@ -216,12 +172,12 @@ def load_archive(simulator, path):
     if kind == "Lattice":
         beamline = rft.Lattice()
         for e in elements:
-            beamline.append(_deserialize_element(rft, e))
+            beamline.append(_element_from_attrs(rft, e))
     elif kind == "Volume":
         beamline = rft.Volume()
         for e in elements:
             beamline.add(
-                _deserialize_element(rft, e),
+                _element_from_attrs(rft, e),
                 float(e.x),
                 float(e.y),
                 float(e.z),
@@ -232,7 +188,9 @@ def load_archive(simulator, path):
         beamline.set_s0(float(s0))
         beamline.set_s1(float(s1))
     else:
-        raise NotImplementedError(f"don't know how to restore a beamline_class={kind!r}")
+        raise NotImplementedError(
+            f"don't know how to restore a beamline_class={kind!r}"
+        )
     simulator.beamline = beamline
     simulator.initial_bunch = _particlegroup_to_bunch(particle_group, bunch_type)
     simulator.tracked_bunch = None
@@ -243,7 +201,7 @@ def _bunch_to_particlegroup(bunch):
     returning `(particle_group, bunch_type)`. `bunch_type` records
     which conversion was used -- `particlegroup_to_bunch6d()`/
     `particlegroup_to_bunch6dt()` are not interchangeable (opposite
-    z/t conventions, see their own docstrings), and nothing about the
+    z/t conventions), and nothing about the
     resulting `ParticleGroup` itself says which one made it.
     """
     import RF_Track as rft
@@ -286,9 +244,7 @@ def _dedupe_field_maps(elements):
 
 
 def _deserialize_bpm(rft, d):
-    return rft.Bpm(
-        float(d.length), float(d.resolution), float(d.resolution_t)
-    )
+    return rft.Bpm(float(d.length), float(d.resolution), float(d.resolution_t))
 
 
 def _deserialize_corrector(rft, d):
@@ -297,18 +253,6 @@ def _deserialize_corrector(rft, d):
 
 def _deserialize_drift(rft, d):
     return rft.Drift(float(d.length))
-
-
-def _deserialize_element(rft, d):
-    cls = d["class"]
-    if cls not in _ELEMENT_DESERIALIZERS:
-        raise NotImplementedError(f"don't know how to restore a {cls!r} element yet")
-    e = _ELEMENT_DESERIALIZERS[cls](rft, d)
-    e.set_name(str(d.name))
-    e.set_aperture(float(d.aperture_x), float(d.aperture_y), "circular")
-    if "t0" in d:
-        e.set_t0(float(d.t0))
-    return e
 
 
 def _deserialize_pillbox_cavity(rft, d):
@@ -371,12 +315,57 @@ def _deserialize_static_magnetic_fieldmap_1d(rft, d):
     return rft.Static_Magnetic_FieldMap_1d(numpy.asarray(d.bz), float(d.hz))
 
 
+def _element_from_attrs(rft, d):
+    cls = d["class"]
+    f = getattr(pykern.pkinspect.this_module(), f"_deserialize_{cls.lower()}", None)
+    if f is None:
+        raise NotImplementedError(f"don't know how to restore a {cls!r} element yet")
+    e = f(rft, d)
+    e.set_name(str(d.name))
+    e.set_aperture(float(d.aperture_x), float(d.aperture_y), "circular")
+    if "t0" in d:
+        e.set_t0(float(d.t0))
+    return e
+
+
+def _element_to_attrs(e, beamline_class="Lattice"):
+    cls = type(e).__name__
+    f = getattr(pykern.pkinspect.this_module(), f"_serialize_{cls.lower()}", None)
+    if f is None:
+        raise NotImplementedError(f"don't know how to archive a {cls!r} element yet")
+    d = f(e)
+    d["class"] = cls
+    d.name = e.get_name()
+    d.aperture_x = e.get_aperture_x()
+    d.aperture_y = e.get_aperture_y()
+    if beamline_class == "Volume":
+        d.update(_position_to_attrs(e))
+    # Only Pillbox_Cavity/RF_FieldMap_1d/RF_FieldMap_2d/Screen have
+    # t0_is_set()/get_t0() at all (confirmed empirically -- Drift,
+    # Quadrupole, Corrector, Solenoid, Static_Magnetic_FieldMap_1d,
+    # Bpm don't). get_phid() alone never reflects autophase(): it
+    # "always reads back the phid the element was constructed with"
+    # (confirmed empirically: get_phid() stays unchanged across
+    # autophase()) -- t0 is the actual correction autophase() applies
+    # and .track() uses as-is. Archiving it directly (confirmed
+    # empirically: a fresh beamline with set_t0() from these captured
+    # values, autophase() never called again, reproduces the
+    # autophased beamline's own tracked mean kinetic energy exactly)
+    # means load_archive() reproduces the real physics regardless of
+    # whether the caller re-runs autophase() or even knows it was ever
+    # used, rather than depending on that recomputation happening to
+    # be reproducible.
+    if hasattr(e, "t0_is_set") and e.t0_is_set():
+        d.t0 = e.get_t0()
+    return d
+
+
 def _infer_autophase(elements):
     """Infer whether `autophase()` was used, from the already-serialized
     `elements` themselves, for `archive()`'s own `autophase=None` case.
 
     A cavity `autophase()`'d before archiving has a real, nonzero `t0`
-    (see `_serialize_element()`'s own comment -- `get_phid()` never
+    (see `_element_to_attrs()`'s own comment -- `get_phid()` never
     reflects it, `t0` does); one that was never autophased either has
     no `"t0"` key at all (`t0_is_set()` was `False`) or, if the caller
     deliberately pinned it to suppress a `Bunch6dT` beamline's own
@@ -384,8 +373,7 @@ def _infer_autophase(elements):
     "any cavity with a nonzero `t0`" is the signal.
     """
     return any(
-        d.get("class") in _CAVITY_CLASSES and d.get("t0", 0.0) != 0.0
-        for d in elements
+        d.get("class") in _CAVITY_CLASSES and d.get("t0", 0.0) != 0.0 for d in elements
     )
 
 
@@ -394,6 +382,37 @@ def _particlegroup_to_bunch(particle_group, bunch_type):
     if bunch_type == "Bunch6dT":
         return particlegroup_to_bunch6dt(particle_group)
     return particlegroup_to_bunch6d(particle_group)
+
+
+def _position_to_attrs(e):
+    """Return `{x, y, z}` for a Volume-mode element's absolute placement.
+
+    Raises:
+        NotImplementedError: the element has a non-identity rotation --
+            decoding RF-Track's (origin, nx, ny, nz) Frame back into the
+            roll/pitch/yaw angles Volume.add() takes isn't implemented yet
+            (every element archived so far happens to have no rotation,
+            so this hasn't been needed, and guessing at the angle
+            convention risks silently wrong physics).
+    """
+    fr = e.get_offsets()
+    origin = numpy.asarray(fr.get_origin()).flatten()
+    nx = numpy.asarray(fr.get_nx()).flatten()
+    ny = numpy.asarray(fr.get_ny()).flatten()
+    nz = numpy.asarray(fr.get_nz()).flatten()
+    if not (
+        numpy.allclose(nx, [1, 0, 0])
+        and numpy.allclose(ny, [0, 1, 0])
+        and numpy.allclose(nz, [0, 0, 1])
+    ):
+        raise NotImplementedError(
+            "archiving a Volume element with a non-identity rotation isn't supported yet"
+        )
+    # Frame.get_origin() is in mm, confirmed empirically (e.g. a screen
+    # added at z=0.3 m reads back as origin z=300) -- but Volume.add()'s
+    # own x/y/z args are in meters, same as every other RF-Track setter in
+    # this module, so this must convert back.
+    return PKDict(x=origin[0] / 1000.0, y=origin[1] / 1000.0, z=origin[2] / 1000.0)
 
 
 def _read_attrs_h5(group):
@@ -449,37 +468,6 @@ def _serialize_drift(e):
     return PKDict(length=e.get_length())
 
 
-def _serialize_element(e, beamline_class="Lattice"):
-    cls = type(e).__name__
-    if cls not in _ELEMENT_SERIALIZERS:
-        raise NotImplementedError(f"don't know how to archive a {cls!r} element yet")
-    d = _ELEMENT_SERIALIZERS[cls](e)
-    d["class"] = cls
-    d.name = e.get_name()
-    d.aperture_x = e.get_aperture_x()
-    d.aperture_y = e.get_aperture_y()
-    if beamline_class == "Volume":
-        d.update(_serialize_position(e))
-    # Only Pillbox_Cavity/RF_FieldMap_1d/RF_FieldMap_2d/Screen have
-    # t0_is_set()/get_t0() at all (confirmed empirically -- Drift,
-    # Quadrupole, Corrector, Solenoid, Static_Magnetic_FieldMap_1d,
-    # Bpm don't). get_phid() alone never reflects autophase(): it
-    # "always reads back the phid the element was constructed with"
-    # (confirmed empirically: get_phid() stays unchanged across
-    # autophase()) -- t0 is the actual correction autophase() applies
-    # and .track() uses as-is. Archiving it directly (confirmed
-    # empirically: a fresh beamline with set_t0() from these captured
-    # values, autophase() never called again, reproduces the
-    # autophased beamline's own tracked mean kinetic energy exactly)
-    # means load_archive() reproduces the real physics regardless of
-    # whether the caller re-runs autophase() or even knows it was ever
-    # used, rather than depending on that recomputation happening to
-    # be reproducible.
-    if hasattr(e, "t0_is_set") and e.t0_is_set():
-        d.t0 = e.get_t0()
-    return d
-
-
 def _serialize_pillbox_cavity(e):
     return PKDict(
         frequency=e.get_frequency(),
@@ -488,37 +476,6 @@ def _serialize_pillbox_cavity(e):
         coefficients=e.get_coefficients().tolist(),
         phid=e.get_phid(),
     )
-
-
-def _serialize_position(e):
-    """Return `{x, y, z}` for a Volume-mode element's absolute placement.
-
-    Raises:
-        NotImplementedError: the element has a non-identity rotation --
-            decoding RF-Track's (origin, nx, ny, nz) Frame back into the
-            roll/pitch/yaw angles Volume.add() takes isn't implemented yet
-            (every element archived so far happens to have no rotation,
-            so this hasn't been needed, and guessing at the angle
-            convention risks silently wrong physics).
-    """
-    fr = e.get_offsets()
-    origin = numpy.asarray(fr.get_origin()).flatten()
-    nx = numpy.asarray(fr.get_nx()).flatten()
-    ny = numpy.asarray(fr.get_ny()).flatten()
-    nz = numpy.asarray(fr.get_nz()).flatten()
-    if not (
-        numpy.allclose(nx, [1, 0, 0])
-        and numpy.allclose(ny, [0, 1, 0])
-        and numpy.allclose(nz, [0, 0, 1])
-    ):
-        raise NotImplementedError(
-            "archiving a Volume element with a non-identity rotation isn't supported yet"
-        )
-    # Frame.get_origin() is in mm, confirmed empirically (e.g. a screen
-    # added at z=0.3 m reads back as origin z=300) -- but Volume.add()'s
-    # own x/y/z args are in meters, same as every other RF-Track setter in
-    # this module, so this must convert back.
-    return PKDict(x=origin[0] / 1000.0, y=origin[1] / 1000.0, z=origin[2] / 1000.0)
 
 
 def _serialize_quadrupole(e):
@@ -649,30 +606,3 @@ def _write_indexed_group(parent, name, items):
     g = parent.create_group(name)
     for i, item in enumerate(items):
         _write_attrs_h5(g.create_group(str(i)), item)
-
-
-# Dispatch tables built from the `_serialize_*`/`_deserialize_*` functions
-# above -- placed here, after them, rather than up with the other globals,
-# since they need those functions to already exist.
-_ELEMENT_SERIALIZERS = {
-    "Bpm": _serialize_bpm,
-    "Corrector": _serialize_corrector,
-    "Drift": _serialize_drift,
-    "Quadrupole": _serialize_quadrupole,
-    "Pillbox_Cavity": _serialize_pillbox_cavity,
-    "RF_FieldMap_1d": _serialize_rf_fieldmap_1d,
-    "RF_FieldMap_2d": _serialize_rf_fieldmap_2d,
-    "Screen": _serialize_screen,
-    "Static_Magnetic_FieldMap_1d": _serialize_static_magnetic_fieldmap_1d,
-}
-_ELEMENT_DESERIALIZERS = {
-    "Bpm": _deserialize_bpm,
-    "Corrector": _deserialize_corrector,
-    "Drift": _deserialize_drift,
-    "Quadrupole": _deserialize_quadrupole,
-    "Pillbox_Cavity": _deserialize_pillbox_cavity,
-    "RF_FieldMap_1d": _deserialize_rf_fieldmap_1d,
-    "RF_FieldMap_2d": _deserialize_rf_fieldmap_2d,
-    "Screen": _deserialize_screen,
-    "Static_Magnetic_FieldMap_1d": _deserialize_static_magnetic_fieldmap_1d,
-}

@@ -18,8 +18,7 @@ def test_archive_round_trip():
     from rslume.rftrack_simulator import RFTrackSimulator
     from x_band_fodo_test import _build_bunch, _build_lattice
 
-    w = pkunit.empty_work_dir()
-    path = str(w.join("archive.h5"))
+    path = str(pkunit.empty_work_dir().join("archive.h5"))
 
     rft.rng_set_seed(_RANDOM_SEED)
     original = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))

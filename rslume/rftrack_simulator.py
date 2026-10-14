@@ -2,9 +2,8 @@
 
 The "simulator" `rslume.rftrack.LUMERFTrackModel`
 (a `lume.actions.ActionModel`) wraps and every `rslume.rftrack_actions`
-action variable operates on -- see `RFTrackSimulator`'s own docstring. `archive()`/`load_archive()`
-delegate to `rslume.rftrack_archive`, which holds the actual HDF5
-serialization.
+action variable operates on. `archive()`/`load_archive()` delegate to
+`rslume.rftrack_archive`, which holds the actual HDF5 serialization.
 
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
@@ -27,6 +26,16 @@ class RFTrackSimulator:
         self.tracked_bunch = None
         self.autophase = None
         self.space_charge = None
+
+    def apply_space_charge(self):
+        """Apply `space_charge` (e.g. as restored by `load_archive()`) to
+        `beamline`, via `rslume.rftrack_utils.apply_space_charge()`; does
+        nothing if it is `None`. Sets the process-global `rft.cvar.SC_engine`.
+        """
+        from rslume import rftrack_utils
+
+        if self.space_charge is not None:
+            rftrack_utils.apply_space_charge(self.beamline, self.space_charge)
 
     def archive(self, path, autophase=None, space_charge=None):
         """Write `beamline` and `initial_bunch` to `path` as HDF5."""

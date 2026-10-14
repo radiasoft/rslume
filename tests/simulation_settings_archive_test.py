@@ -37,11 +37,9 @@ def test_pic_space_charge_and_autophase_round_trip():
     from rslume.rftrack_simulator import RFTrackSimulator
     import RF_Track as rft
 
-    w = pkunit.empty_work_dir()
-    path = str(w.join("archive.h5"))
+    path = str(pkunit.empty_work_dir().join("archive.h5"))
 
-    original = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))
-    original.archive(
+    RFTrackSimulator(_build_lattice(rft), _build_bunch(rft)).archive(
         path,
         autophase=True,
         space_charge=dict(kind="pic", dt_mm=3.0, grid=(8, 8, 16), mirror_m=0.0, smooth=0.5),
@@ -61,11 +59,11 @@ def test_p2p_space_charge_round_trip():
     from rslume.rftrack_simulator import RFTrackSimulator
     import RF_Track as rft
 
-    w = pkunit.empty_work_dir()
-    path = str(w.join("archive.h5"))
+    path = str(pkunit.empty_work_dir().join("archive.h5"))
 
-    original = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))
-    original.archive(path, autophase=False, space_charge=dict(kind="p2p"))
+    RFTrackSimulator(_build_lattice(rft), _build_bunch(rft)).archive(
+        path, autophase=False, space_charge=dict(kind="p2p")
+    )
 
     reloaded = RFTrackSimulator()
     reloaded.load_archive(path)
@@ -78,11 +76,9 @@ def test_unset_space_charge_defaults_to_none_autophase_is_inferred():
     from rslume.rftrack_simulator import RFTrackSimulator
     import RF_Track as rft
 
-    w = pkunit.empty_work_dir()
-    path = str(w.join("archive.h5"))
+    path = str(pkunit.empty_work_dir().join("archive.h5"))
 
-    original = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))
-    original.archive(path)
+    RFTrackSimulator(_build_lattice(rft), _build_bunch(rft)).archive(path)
 
     reloaded = RFTrackSimulator()
     reloaded.load_archive(path)
@@ -104,8 +100,9 @@ def test_rearchive_keeps_loaded_space_charge():
     first = str(w.join("first.h5"))
     second = str(w.join("second.h5"))
 
-    original = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))
-    original.archive(first, space_charge={"kind": "p2p"})
+    RFTrackSimulator(_build_lattice(rft), _build_bunch(rft)).archive(
+        first, space_charge={"kind": "p2p"}
+    )
     loaded = RFTrackSimulator()
     loaded.load_archive(first)
     loaded.archive(second)

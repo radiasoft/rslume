@@ -31,22 +31,26 @@ def _build_model():
     twiss.emitt_y = 1.0
     twiss.sigma_t = 1.0
     twiss.sigma_pt = 1.0
-    bunch = rft.Bunch6d_QR(rft.electronmass, -1 * rft.nC, -1, 100.0, twiss, 100)
-
-    simulator = RFTrackSimulator(beamline, bunch)
-    writable = RFTrackWritableScalarVariable(
-        name="Q1_strength",
-        element_name="Q1",
-        attribute="strength",
-        default_value=5.0,
+    return LUMERFTrackModel(
+        simulator=RFTrackSimulator(
+            beamline,
+            rft.Bunch6d_QR(rft.electronmass, -1 * rft.nC, -1, 100.0, twiss, 100),
+        ),
+        action_variables=[
+            RFTrackWritableScalarVariable(
+                name="Q1_strength",
+                element_name="Q1",
+                attribute="strength",
+                default_value=5.0,
+            ),
+            RFTrackReadOnlyScalarVariable(
+                name="Q1_strength_ro",
+                element_name="Q1",
+                attribute="strength",
+                read_only=True,
+            ),
+        ],
     )
-    read_only = RFTrackReadOnlyScalarVariable(
-        name="Q1_strength_ro",
-        element_name="Q1",
-        attribute="strength",
-        read_only=True,
-    )
-    return LUMERFTrackModel(simulator=simulator, action_variables=[writable, read_only])
 
 
 def test_set_and_get():
@@ -74,9 +78,8 @@ def test_read_only_raises():
     from lume.exceptions import ReadOnlyError
     from pykern import pkunit
 
-    m = _build_model()
     with pkunit.pkexcept(ReadOnlyError):
-        m.set({"Q1_strength_ro": 1.0})
+        _build_model().set({"Q1_strength_ro": 1.0})
 
 
 def test_reset():
@@ -109,24 +112,28 @@ def _build_corrector_model():
     twiss.emitt_y = 1.0
     twiss.sigma_t = 1.0
     twiss.sigma_pt = 1.0
-    bunch = rft.Bunch6d_QR(rft.electronmass, -1 * rft.nC, -1, 100.0, twiss, 100)
-
-    simulator = RFTrackSimulator(beamline, bunch)
-    hkick = RFTrackWritableVectorComponentVariable(
-        name="C1_hkick",
-        element_name="C1",
-        attribute="strength",
-        index=0,
-        default_value=0.0,
+    return LUMERFTrackModel(
+        simulator=RFTrackSimulator(
+            beamline,
+            rft.Bunch6d_QR(rft.electronmass, -1 * rft.nC, -1, 100.0, twiss, 100),
+        ),
+        action_variables=[
+            RFTrackWritableVectorComponentVariable(
+                name="C1_hkick",
+                element_name="C1",
+                attribute="strength",
+                index=0,
+                default_value=0.0,
+            ),
+            RFTrackWritableVectorComponentVariable(
+                name="C1_vkick",
+                element_name="C1",
+                attribute="strength",
+                index=1,
+                default_value=0.0,
+            ),
+        ],
     )
-    vkick = RFTrackWritableVectorComponentVariable(
-        name="C1_vkick",
-        element_name="C1",
-        attribute="strength",
-        index=1,
-        default_value=0.0,
-    )
-    return LUMERFTrackModel(simulator=simulator, action_variables=[hkick, vkick])
 
 
 def _pkeq_approx(expect, actual):

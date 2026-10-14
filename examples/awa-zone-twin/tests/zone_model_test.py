@@ -42,8 +42,9 @@ def test_zone1_models_do_not_share_state():
     a = Zone1Model(n_particles=_N_PARTICLES)
     nominal = a.get([_SOLENOID])[_SOLENOID]
     a.set({_SOLENOID: nominal * 2})
-    b = Zone1Model(n_particles=_N_PARTICLES)
-    pkunit.pkeq(nominal, b.get([_SOLENOID])[_SOLENOID])
+    pkunit.pkeq(
+        nominal, Zone1Model(n_particles=_N_PARTICLES).get([_SOLENOID])[_SOLENOID]
+    )
 
 
 def test_handoff_keeps_charge_energy_and_bunch_length():
@@ -61,8 +62,7 @@ def test_handoff_keeps_charge_energy_and_bunch_length():
         pkunit.pkok(
             abs(a - b) < 1e-3 * abs(a), "{} changed in handoff: zone1={} zone2={}", name, a, b
         )
-    z1 = zone1.model.simulator.tracked_bunch
-    sigma_z = z1.get_phase_space("%Z")[:, 0].std()
+    sigma_z = zone1.model.simulator.tracked_bunch.get_phase_space("%Z")[:, 0].std()
     sigma_t = zone2.model.simulator.initial_bunch.get_phase_space("%t")[:, 0].std()
     # zone1 is relativistic, so sigma_t [mm/c] ~ sigma_z [mm] / beta ~ sigma_z
     pkunit.pkok(

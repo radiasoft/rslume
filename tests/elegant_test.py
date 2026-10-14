@@ -6,7 +6,7 @@
 
 
 def test_archive():
-    from pykern import pkio, pkunit, pkdebug
+    from pykern import pkio, pkunit
     import beamphysics.tools
     import numpy
     import rslume.elegant
@@ -59,7 +59,7 @@ def test_archive():
 
 
 def test_labels():
-    from pykern import pkio, pkunit, pkdebug
+    from pykern import pkunit
     from rslume.elegant import ElegantLabel
 
     for case in (

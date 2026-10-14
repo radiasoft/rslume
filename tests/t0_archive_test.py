@@ -18,8 +18,7 @@ def test_t0_archive_round_trip():
     from pykern import pkunit
     from rslume.rftrack_simulator import RFTrackSimulator
 
-    w = pkunit.empty_work_dir()
-    path = str(w.join("archive.h5"))
+    path = str(pkunit.empty_work_dir().join("archive.h5"))
 
     import numpy
 

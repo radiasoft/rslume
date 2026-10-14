@@ -14,8 +14,7 @@ not drawn at all.
 
 Positions and widths come straight from `zone_model`'s own loaded
 `ZONE1_MODULE["ELEMENTS"]`/`ZONE2_MODULE["ELEMENTS"]` -- the exact
-generated element tables `zone_model.py` itself builds from (see
-its own module docstring). Each element's
+generated element tables `zone_model.py` itself builds from. Each element's
 `elemedge` is each element's *absolute* position for zone1 (a Volume,
 placed at arbitrary, even overlapping z) and each element's *start*
 position for zone2 (a Lattice, sequential) -- `l` (when an element has
@@ -26,7 +25,7 @@ straight from `build_model()`'s own per-kind naming convention
 (`<name>_phid`, `<name>_k1`, `<name>_hkick`/`<name>_vkick`, ...) --
 `solenoid_fieldmap`'s `<name>_scale_factor` is the one exception,
 `Zone1Model`'s own rebuild-based variable, not one `build_model()`
-itself exposes (see its docstring). So the display follows the code
+itself exposes. So the display follows the code
 on both counts. Run `python generate_zone_twin_display.py` to
 regenerate; do not edit the `.bob` files by hand.
 """
@@ -100,7 +99,7 @@ EDITOR_FILE = {
 def _element_macros(group, e):
     """`{macro: value}` for `e`'s own editor, in `build_model()`'s (or,
     for a solenoid, `Zone1Model`'s own rebuild-based) PV naming
-    convention -- see this file's own module docstring. `NAME` is the
+    convention. `NAME` is the
     element's own name, shown in the editor's title.
     """
     name = e.name

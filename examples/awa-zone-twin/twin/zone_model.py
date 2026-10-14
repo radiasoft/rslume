@@ -2,20 +2,18 @@
 
 Both zones' physics come from two generated scripts, "AWA Zone 1" and
 "AWA Zone 2", kept in `sources/zone1_source.py`/`sources/zone2_source.py`
-(see those files' own docstrings and `_load_generated_module()` below).
-Reusing their `build_beamline()`/`build_bunch()`/`autophase()`/
-`apply_space_charge()`/`build_model()` means this module doesn't
+(see `_load_generated_module()` below).
+Reusing their `build_beamline()`/`build_bunch()`/`autophase()` and
+`rslume`'s `apply_space_charge()`/`build_model()` means this module doesn't
 re-derive the lattice, bunch, autophase, and space-charge setup -- the
 two generated scripts are the single source of truth, and this module is just glue: load
 them, chain zone1's output into zone2's input, and expose each one's
 own `build_model()` action variables (plus a few extras, below) as
 `LUMEModel` variables.
 
-`build_model()`'s per-element action variables (gradient/phid/k1/
-max_current/P_actual/hkick/vkick -- see its own docstring in either
-generated script) cover everything with a live, no-rebuild RF-Track
-setter. The one real gap: zone1's solenoids (`SolBF`/`SolM`/`SolL1`/
-`SolL2`/`SolL4`) are `solenoid_fieldmap` kind, whose field is rescaled
+`rslume.rftrack.build_model()`'s per-element action variables (gradient/
+phid/k1/max_current/P_actual/hkick/vkick) cover everything with a live, no-rebuild RF-Track setter.
+The one real gap: zone1's solenoids (`SolBF`/`SolM`/`SolL1`/`SolL2`/`SolL4`) are `solenoid_fieldmap` kind, whose field is rescaled
 from a file at *construction* time -- `build_model()` deliberately
 skips them (no live scale attribute exists on
 `Static_Magnetic_FieldMap_1d`). `Zone1Model` adds a rebuild-based
@@ -53,7 +51,9 @@ import RF_Track as rft
 from lume.model import LUMEModel
 from lume.staged_model import FinalParticlesMixIn, InitialParticlesMixIn, StagedModel
 
+from rslume.rftrack import build_model
 from rslume.rftrack_utils import (
+    apply_space_charge,
     bunch6d_to_particlegroup,
     bunch6dt_to_particlegroup,
     particlegroup_to_bunch6d,
@@ -98,12 +98,10 @@ SCREEN_FOV_MM = {
 
 def _load_generated_module(name, lib_dir=None):
     """Exec `sources/<name>.py` (a generated parameters.py, its
-    trailing auto-run `main()` call already stripped -- see that
-    file's own docstring) into a fresh namespace, returning that
+    trailing auto-run `main()` call already stripped) into a fresh namespace, returning that
     namespace as a plain dict of its top-level names (`ELEMENTS`,
     `BUNCH`, `SETTINGS`, `build_beamline`, `build_bunch`,
-    `build_model`, `autophase`/`apply_space_charge` if the sim used
-    them, ...).
+    `autophase` if the sim used it, ...).
 
     `lib_dir`, if given, rewrites every element's own field-map `file`
     to an absolute path under it -- the generated script's own `file`
@@ -216,8 +214,8 @@ class Zone1Model(FinalParticlesMixIn, LUMEModel):
         bunch = self._module["build_bunch"]()
         volume = self._module["build_beamline"]()
         self._module["autophase"](volume)
-        self._module["apply_space_charge"](volume)
-        self.model = self._module["build_model"](volume, bunch)
+        apply_space_charge(volume, self._module["SETTINGS"].space_charge)
+        self.model = build_model(self._module["ELEMENTS"], volume, bunch)
         self.model.reset()
         self._update_screen_images()
 
@@ -276,8 +274,10 @@ class Zone2Model(InitialParticlesMixIn, LUMEModel):
         super().__init__()
         self._screens = screen_names(ZONE2_MODULE["ELEMENTS"])
         self._has_injected = False
-        self.model = ZONE2_MODULE["build_model"](
-            ZONE2_MODULE["build_beamline"](), _placeholder_bunch(ZONE2_MODULE["BUNCH"])
+        self.model = build_model(
+            ZONE2_MODULE["ELEMENTS"],
+            ZONE2_MODULE["build_beamline"](),
+            _placeholder_bunch(ZONE2_MODULE["BUNCH"]),
         )
         self.model.reset()
         self.screen_images = {
@@ -292,8 +292,7 @@ class Zone2Model(InitialParticlesMixIn, LUMEModel):
         `None` until zone1 has actually injected one (unlike zone1,
         whose own `tracked_bunch` is a real signal on its own; zone2's
         `tracked_bunch` is never `None` once built, even before a real
-        injection, because of its placeholder bunch -- see this class's
-        own docstring).
+        injection, because of its placeholder bunch).
         """
         return self.model.simulator.tracked_bunch if self._has_injected else None
 
@@ -314,8 +313,10 @@ class Zone2Model(InitialParticlesMixIn, LUMEModel):
         self._update_screen_images()
 
     def reset(self):
-        self.model = ZONE2_MODULE["build_model"](
-            ZONE2_MODULE["build_beamline"](), _placeholder_bunch(ZONE2_MODULE["BUNCH"])
+        self.model = build_model(
+            ZONE2_MODULE["ELEMENTS"],
+            ZONE2_MODULE["build_beamline"](),
+            _placeholder_bunch(ZONE2_MODULE["BUNCH"]),
         )
         self.model.reset()
         self._has_injected = False

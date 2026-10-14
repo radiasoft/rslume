@@ -18,13 +18,11 @@ def test_serialize_recovers_kx_ky_independent_of_reference_momentum():
     from pykern import pkunit
     from rslume.rftrack_archive import _serialize_corrector
 
-    corr = rft.Corrector(0.1, 2.0, 3.0)
     for p_ref_mev in (1.0, 137.0, 5000.0):
-        corr2 = rft.Corrector(0.1, 2.0, 3.0)
         # _serialize_corrector always queries get_kick(1.0) internally;
         # this just confirms that choice wasn't load-bearing by checking
         # the same recovery formula at other reference momenta too
-        kick = corr2.get_kick(p_ref_mev)
+        kick = rft.Corrector(0.1, 2.0, 3.0).get_kick(p_ref_mev)
         import scipy.constants
 
         c_mm_per_ns = scipy.constants.c / 1e6
@@ -38,7 +36,7 @@ def test_serialize_recovers_kx_ky_independent_of_reference_momentum():
             ky,
         )
 
-    d = _serialize_corrector(corr)
+    d = _serialize_corrector(rft.Corrector(0.1, 2.0, 3.0))
     pkunit.pkok(abs(d["kx"] - 2.0) < 1e-9, "kx={}", d["kx"])
     pkunit.pkok(abs(d["ky"] - 3.0) < 1e-9, "ky={}", d["ky"])
     pkunit.pkeq(0.1, d["length"])
@@ -49,8 +47,7 @@ def test_archive_round_trip():
     from pykern import pkunit
     from rslume.rftrack_simulator import RFTrackSimulator
 
-    w = pkunit.empty_work_dir()
-    path = str(w.join("corrector.h5"))
+    path = str(pkunit.empty_work_dir().join("corrector.h5"))
 
     beamline = rft.Lattice()
     corr = rft.Corrector(0.1, 2.0, 3.0)
@@ -68,9 +65,10 @@ def test_archive_round_trip():
     twiss.sigma_t = 1.0
     twiss.sigma_pt = 1.0
     rft.rng_set_seed(5489)
-    bunch = rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 100.0, twiss, 50)
-
-    original = RFTrackSimulator(beamline, bunch)
+    original = RFTrackSimulator(
+        beamline,
+        rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 100.0, twiss, 50),
+    )
     original.archive(path)
 
     reloaded = RFTrackSimulator()

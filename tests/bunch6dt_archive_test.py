@@ -6,8 +6,6 @@ distinct from x_band_fodo_archive_test.py's Bunch6d coverage.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
-_RANDOM_SEED = 5489
-
 
 def _build_bunch(rft):
     t = rft.Bunch6dT_twiss()
@@ -44,8 +42,7 @@ def test_bunch6dt_archive_round_trip():
     from pykern import pkunit
     from rslume.rftrack_simulator import RFTrackSimulator
 
-    w = pkunit.empty_work_dir()
-    path = str(w.join("archive.h5"))
+    path = str(pkunit.empty_work_dir().join("archive.h5"))
 
     original = RFTrackSimulator(_build_volume(rft), _build_bunch(rft))
     original.archive(path)

@@ -74,28 +74,29 @@ def _build_model():
     from rslume.rftrack_actions import RFTrackWritableScalarVariable
     from rslume.rftrack_simulator import RFTrackSimulator
 
-    simulator = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))
-    variables = [
-        RFTrackWritableScalarVariable(
-            name="QF_gradient",
-            element_name="QF",
-            attribute="gradient",
-            default_value=5.0,
-        ),
-        RFTrackWritableScalarVariable(
-            name="QD_gradient",
-            element_name="QD",
-            attribute="gradient",
-            default_value=-5.0,
-        ),
-        RFTrackWritableScalarVariable(
-            name="C1_phid",
-            element_name="C1",
-            attribute="phid",
-            default_value=0.0,
-        ),
-    ]
-    return LUMERFTrackModel(simulator=simulator, action_variables=variables)
+    return LUMERFTrackModel(
+        simulator=RFTrackSimulator(_build_lattice(rft), _build_bunch(rft)),
+        action_variables=[
+            RFTrackWritableScalarVariable(
+                name="QF_gradient",
+                element_name="QF",
+                attribute="gradient",
+                default_value=5.0,
+            ),
+            RFTrackWritableScalarVariable(
+                name="QD_gradient",
+                element_name="QD",
+                attribute="gradient",
+                default_value=-5.0,
+            ),
+            RFTrackWritableScalarVariable(
+                name="C1_phid",
+                element_name="C1",
+                attribute="phid",
+                default_value=0.0,
+            ),
+        ],
+    )
 
 
 _MODEL = None

@@ -47,8 +47,7 @@ def test_field_map_dedup():
     from pykern import pkunit
     from rslume.rftrack_simulator import RFTrackSimulator
 
-    w = pkunit.empty_work_dir()
-    path = str(w.join("archive.h5"))
+    path = str(pkunit.empty_work_dir().join("archive.h5"))
 
     rft.rng_set_seed(_RANDOM_SEED)
     original = RFTrackSimulator(_build_volume(rft, numpy), _build_bunch(rft))
@@ -68,6 +67,7 @@ def test_field_map_dedup():
         pkunit.pkeq(
             original.beamline[i].get_phid(), reloaded.beamline[i].get_phid()
         )
-        e1, _ = original.beamline[i].get_field(0.0, 0.0, 100.0, 0.0)
-        e2, _ = reloaded.beamline[i].get_field(0.0, 0.0, 100.0, 0.0)
-        pkunit.pkeq(list(e1), list(e2))
+        pkunit.pkeq(
+            list(original.beamline[i].get_field(0.0, 0.0, 100.0, 0.0)[0]),
+            list(reloaded.beamline[i].get_field(0.0, 0.0, 100.0, 0.0)[0]),
+        )

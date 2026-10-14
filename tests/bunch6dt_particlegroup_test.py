@@ -55,10 +55,12 @@ def test_round_trip():
     from rslume.rftrack_utils import bunch6dt_to_particlegroup, particlegroup_to_bunch6dt
 
     b = _build_bunch6dt(rft, numpy)
-    pg = bunch6dt_to_particlegroup(b, snapshot_time=False)
-    b2 = particlegroup_to_bunch6dt(pg)
-
     fields = "%X %Y %Z %Px %Py %Pz %m %Q %N %t0"
-    m1 = b.get_phase_space(fields)
-    m2 = b2.get_phase_space(fields)
-    numpy.testing.assert_allclose(m2, m1, rtol=0, atol=1e-5)
+    numpy.testing.assert_allclose(
+        particlegroup_to_bunch6dt(
+            bunch6dt_to_particlegroup(b, snapshot_time=False)
+        ).get_phase_space(fields),
+        b.get_phase_space(fields),
+        rtol=0,
+        atol=1e-5,
+    )

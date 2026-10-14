@@ -13,8 +13,7 @@ Each variable's `_get`/`_set` here takes the
 *owning* `Zone1Model`/`Zone2Model` instance as its "simulator" argument,
 not an RF-Track simulator directly -- the rebuild/screen-image/
 diagnostic-bunch logic these need lives on the zone model itself, not
-on `model.simulator`. See `zone_model.py`'s own module docstring for
-why zone1's solenoids need a rebuild at all.
+on `model.simulator`.
 """
 
 import RF_Track as rft

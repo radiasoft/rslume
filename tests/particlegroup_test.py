@@ -30,8 +30,7 @@ def test_bunch6d_to_particlegroup():
     from pykern import pkunit
     from rslume.rftrack_utils import bunch6d_to_particlegroup
 
-    bunch = _build_bunch(rft)
-    pg = bunch6d_to_particlegroup(bunch)
+    pg = bunch6d_to_particlegroup(_build_bunch(rft))
 
     pkunit.pkeq("electron", pg.species)
     pkunit.pkeq(50, len(pg.x))
@@ -53,13 +52,13 @@ def test_round_trip():
     from rslume.rftrack_utils import bunch6d_to_particlegroup, particlegroup_to_bunch6d
 
     bunch = _build_bunch(rft)
-    pg = bunch6d_to_particlegroup(bunch)
-    reconstructed = particlegroup_to_bunch6d(pg)
-
     fields = "%x %xp %y %yp %t %P %m %Q %N"
-    m1 = bunch.get_phase_space(fields)
-    m2 = reconstructed.get_phase_space(fields)
-    numpy.testing.assert_allclose(m2, m1, rtol=0, atol=1e-6)
+    numpy.testing.assert_allclose(
+        particlegroup_to_bunch6d(bunch6d_to_particlegroup(bunch)).get_phase_space(fields),
+        bunch.get_phase_space(fields),
+        rtol=0,
+        atol=1e-6,
+    )
 
 
 def test_unknown_species_raises():
@@ -70,11 +69,12 @@ def test_unknown_species_raises():
 
     # a proton-mass particle with charge +2 (e.g. an alpha-like ion) isn't
     # electron/positron/proton -- beamphysics has no "other" species
-    matrix_bunch = rft.Bunch6d(
-        numpy.array([[0.0, 0.0, 0.0, 0.0, 0.0, 100.0, 938.272, 2.0, 1e9, 1]])
-    )
     with pkunit.pkexcept(ValueError):
-        bunch6d_to_particlegroup(matrix_bunch)
+        bunch6d_to_particlegroup(
+            rft.Bunch6d(
+                numpy.array([[0.0, 0.0, 0.0, 0.0, 0.0, 100.0, 938.272, 2.0, 1e9, 1]])
+            )
+        )
 
 
 def test_large_angle_momentum_matches_rf_track():
@@ -101,9 +101,11 @@ def test_large_angle_momentum_matches_rf_track():
         actual,
         expect,
     )
-    back = particlegroup_to_bunch6d(pg)
     pkunit.pkok(
-        numpy.abs(back.get_phase_space("%xp %yp") - bunch.get_phase_space("%xp %yp")).max()
+        numpy.abs(
+            particlegroup_to_bunch6d(pg).get_phase_space("%xp %yp")
+            - bunch.get_phase_space("%xp %yp")
+        ).max()
         < 1e-6,
         "angles do not round-trip",
     )

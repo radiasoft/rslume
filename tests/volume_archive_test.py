@@ -19,8 +19,15 @@ def _build_volume(rft):
     # a smooth half-sine bump, not a single spike -- RF_Track's Volume.track()
     # autophases the cavity, which fails ("no on-crest accelerating phase")
     # against an unrealistic field profile
-    ez = (1e6 * numpy.sin(numpy.linspace(0, numpy.pi, nz))).astype(complex)
-    cavity = rft.RF_FieldMap_1d(ez, hz, (nz - 1) * hz, 1.3e9, 1.0, 1.0, 1.0)
+    cavity = rft.RF_FieldMap_1d(
+        (1e6 * numpy.sin(numpy.linspace(0, numpy.pi, nz))).astype(complex),
+        hz,
+        (nz - 1) * hz,
+        1.3e9,
+        1.0,
+        1.0,
+        1.0,
+    )
     cavity.set_name("C1")
     cavity.set_phid(10.0)
 
@@ -54,8 +61,7 @@ def test_volume_archive_round_trip():
     from pykern import pkunit
     from rslume.rftrack_simulator import RFTrackSimulator
 
-    w = pkunit.empty_work_dir()
-    path = str(w.join("volume.h5"))
+    path = str(pkunit.empty_work_dir().join("volume.h5"))
 
     rft.rng_set_seed(5489)
     original = RFTrackSimulator(_build_volume(rft), _build_bunch(rft))
@@ -76,8 +82,7 @@ def test_volume_archive_round_trip():
         # shared "field_maps" group, referenced by the element's own
         # "ez" attr ("@<md5>") rather than duplicated inline -- see
         # rslume.rftrack_archive.archive()'s own docstring (_dedupe_field_maps)
-        ez_ref = f["elements"]["0"].attrs["ez"]
-        pkunit.pkeq(21, len(f["field_maps"][ez_ref[1:]]))
+        pkunit.pkeq(21, len(f["field_maps"][f["elements"]["0"].attrs["ez"][1:]]))
 
     pkunit.pkeq(10.0, original.beamline[0].get_phid(), "archive() must not mutate beamline")
 
