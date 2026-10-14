@@ -54,11 +54,16 @@ each zone's three diagnostics read-only.
 
 `phoebus/generate_zone_twin_display.py` generates a to-scale, clickable
 synoptic (`zone_twin.bob`): each element is a colored
-button at its real position along the beamline; clicking it opens a
-small, reusable, generic editor (`cavity_controls.bob`,
-`solenoid_controls.bob`, `corrector_controls.bob`, `quad_controls.bob`),
-parameterized by macros carrying that element's own PV names, so one
-editor file serves every device of that kind. There is no pre-built AWA
+button at its real position along the beamline; clicking it selects that
+element in the editor panel beside the screen images. The panel holds one
+embedded editor per element, all at the same spot, each a small, reusable,
+generic editor (`cavity_controls.bob`, `solenoid_controls.bob`,
+`corrector_controls.bob`, `quad_controls.bob`) parameterized by macros
+carrying that element's own PV names, so one editor file serves every
+device of that kind. Only the selected element's editor is visible: the
+buttons write the element's name to a local PV (`loc://selected_element`)
+and a rule on each embedded editor shows it while that PV holds its
+element's name. There is no pre-built AWA
 floor-plan to link against, so this one is built from the generated
 scripts' own `ELEMENTS` tables (positions, lengths, and which PV each
 element's kind controls).
@@ -138,8 +143,9 @@ rather see those dumps (e.g. to diagnose an actual freeze).
 - **Twin:** LED and text at the top right: `Idle` (green) or `Simulating`
   (amber) while the twin re-tracks.
 - **Click any colored element** (cavity, solenoid, corrector, quadrupole)
-  to open its controls in a popup window: a spinner, a slider and a
-  readback for each of its parameters. Changing a zone1 element's
+  to show its controls in the "Element editor" panel beside the screen
+  images: an entry field (applied on Enter), its unit and a readback for
+  each of its parameters. Clicking another element replaces them. Changing a zone1 element's
   parameter retracks both zones (several seconds); changing a zone2
   element's retracks only zone2 (well under a second).
 - The two "Zone N exit" readback blocks below the legend show each
