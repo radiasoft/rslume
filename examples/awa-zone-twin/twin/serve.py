@@ -53,7 +53,8 @@ def main(argv: list[str] | None = None) -> None:
             "--threads",
             type=int,
             default=None,
-            help="RF-Track thread count (default: min(8, RF_Track.max_number_of_threads))",
+            help="RF-Track thread count (default: min("
+            + f"{zone_model.DEFAULT_THREADS}, RF_Track.max_number_of_threads))",
         )
         return parser.parse_args(argv)
 

@@ -17,6 +17,7 @@ def test_every_symbol_is_a_real_unit():
 
 
 def test_every_archived_numeric_field_has_a_unit():
+    import rftrack_util
     import h5py
     import numpy
     import RF_Track as rft
@@ -45,14 +46,10 @@ def test_every_archived_numeric_field_has_a_unit():
     for i, e in enumerate(elements):
         e.set_name(f"E{i}")
         lattice.append(e)
-    twiss = rft.Bunch6d_twiss()
-    twiss.beta_x = twiss.beta_y = twiss.emitt_x = twiss.emitt_y = 1.0
-    twiss.alpha_x = twiss.alpha_y = 0.0
-    twiss.sigma_t = twiss.sigma_pt = 1.0
     path = str(pkunit.empty_work_dir().join("a.h5"))
     RFTrackSimulator(
         lattice,
-        rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 10.0, twiss, 10),
+        rftrack_util.twiss_bunch(rft, 10.0, 10),
     ).archive(path)
     with h5py.File(path, "r") as f:
         for i in f["elements"]:

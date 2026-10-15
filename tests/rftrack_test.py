@@ -6,6 +6,7 @@
 
 
 def _build_model():
+    import rftrack_util
     import RF_Track as rft
     from rslume.rftrack import LUMERFTrackModel
     from rslume.rftrack_actions import (
@@ -22,19 +23,10 @@ def _build_model():
     beamline.append(q)
     beamline.append(d)
 
-    twiss = rft.Bunch6d_twiss()
-    twiss.beta_x = 5.0
-    twiss.beta_y = 5.0
-    twiss.alpha_x = 0.0
-    twiss.alpha_y = 0.0
-    twiss.emitt_x = 1.0
-    twiss.emitt_y = 1.0
-    twiss.sigma_t = 1.0
-    twiss.sigma_pt = 1.0
     return LUMERFTrackModel(
         simulator=RFTrackSimulator(
             beamline,
-            rft.Bunch6d_QR(rft.electronmass, -1 * rft.nC, -1, 100.0, twiss, 100),
+            rftrack_util.twiss_bunch(rft, 100.0, 100, charge_nc=-1, beta=5.0),
         ),
         action_variables=[
             RFTrackWritableScalarVariable(
@@ -64,14 +56,22 @@ def test_set_and_get():
 
 
 def test_set_retracks():
+    """set() changes the element and re-tracks: the result is the same as
+    changing a fresh copy of the beamline directly and tracking it."""
+    import numpy
     from pykern import pkunit
 
+    f = "%x %xp %y %yp %t %P"
     m = _build_model()
     m.set({"Q1_strength": 5.0})
-    x1 = m.simulator.tracked_bunch.get_phase_space("%x").mean()
+    default = m.simulator.tracked_bunch.get_phase_space(f)
     m.set({"Q1_strength": 5000.0})
-    x2 = m.simulator.tracked_bunch.get_phase_space("%x").mean()
-    pkunit.pkok(x1 != x2, "expected tracked beam to change: x1={} x2={}", x1, x2)
+    actual = m.simulator.tracked_bunch.get_phase_space(f)
+    s = _build_model().simulator
+    s.find_element("Q1").set_strength(5000.0)
+    s.track()
+    numpy.testing.assert_array_equal(actual, s.tracked_bunch.get_phase_space(f))
+    pkunit.pkok(not numpy.array_equal(default, actual), "Q1's strength had no effect")
 
 
 def test_read_only_raises():
@@ -93,6 +93,7 @@ def test_reset():
 
 
 def _build_corrector_model():
+    import rftrack_util
     import RF_Track as rft
     from rslume.rftrack import LUMERFTrackModel
     from rslume.rftrack_actions import RFTrackWritableVectorComponentVariable
@@ -103,19 +104,10 @@ def _build_corrector_model():
     beamline = rft.Lattice()
     beamline.append(c)
 
-    twiss = rft.Bunch6d_twiss()
-    twiss.beta_x = 5.0
-    twiss.beta_y = 5.0
-    twiss.alpha_x = 0.0
-    twiss.alpha_y = 0.0
-    twiss.emitt_x = 1.0
-    twiss.emitt_y = 1.0
-    twiss.sigma_t = 1.0
-    twiss.sigma_pt = 1.0
     return LUMERFTrackModel(
         simulator=RFTrackSimulator(
             beamline,
-            rft.Bunch6d_QR(rft.electronmass, -1 * rft.nC, -1, 100.0, twiss, 100),
+            rftrack_util.twiss_bunch(rft, 100.0, 100, charge_nc=-1, beta=5.0),
         ),
         action_variables=[
             RFTrackWritableVectorComponentVariable(

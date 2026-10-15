@@ -29,12 +29,15 @@ class RFTrackSimulator:
 
     def apply_space_charge(self):
         """Apply `space_charge` (e.g. as restored by `load_archive()`) to
-        `beamline`, via `rslume.rftrack_utils.apply_space_charge()`; does
-        nothing if it is `None`. Sets the process-global `rft.cvar.SC_engine`.
+        `beamline`, via `rslume.rftrack_utils.apply_space_charge()`, or, if
+        it is `None`, `rslume.rftrack_utils.reset_space_charge()`. Sets the
+        process-global `rft.cvar.SC_engine`.
         """
         from rslume import rftrack_utils
 
-        if self.space_charge is not None:
+        if self.space_charge is None:
+            rftrack_utils.reset_space_charge()
+        else:
             rftrack_utils.apply_space_charge(self.beamline, self.space_charge)
 
     def archive(self, path, autophase=None, space_charge=None):

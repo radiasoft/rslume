@@ -17,10 +17,52 @@ import numpy
 import scipy.constants
 from pykern.pkcollections import PKDict
 
+# Columns of the file `save_bpms()` writes: S [m], x and y [mm], and the
+# BPM's total charge.
+BPM_COLUMNS = ("s", "x", "y", "charge")
+
+# Every element spec `kind` a generated RF-Track script builds:
+# `rslume.rftrack.build_model()` rejects any other.
+ELEMENT_KINDS = frozenset(
+    (
+        "bpm",
+        "cavity_analytic",
+        "cavity_fieldmap",
+        "cavity_fieldmap_2d",
+        "corrector",
+        "drift",
+        "quadrupole_gradient",
+        "quadrupole_k1",
+        "rbend",
+        "screen",
+        "solenoid_analytic",
+        "solenoid_fieldmap",
+    )
+)
+
+# Columns of the files `save_particles()` and `save_screens()` write, in
+# base SI units; `weight` is each macroparticle's charge [C].
+PHASE_SPACE_COLUMNS = (
+    "x",
+    "xp",
+    "y",
+    "yp",
+    "z",
+    "t",
+    "Px",
+    "Py",
+    "Pz",
+    "P",
+    "E",
+    "K",
+    "weight",
+)
+
 # RF-Track's native phase-space units are mm, mrad, and MeV/c; saved
 # particle files are rescaled to base SI units (m, rad, eV/c, eV, s) to
 # match impact-t's convention. Columns: x, xp, y, yp, z, t, Px, Py, Pz, P,
-# E, K (see `_BUNCH6D_FIELDS`).
+# E, K (see `_BUNCH6D_FIELDS`); the saved files then add each particle's
+# charge (see `_phase_space()`).
 PHASE_SPACE_SCALE = numpy.array(
     [
         1e-3,  # x: mm -> m
@@ -36,6 +78,46 @@ PHASE_SPACE_SCALE = numpy.array(
         1e6,  # E: MeV -> eV
         1e6,  # K: MeV -> eV
     ]
+)
+
+# Columns of the file `save_stats()` writes, for a Volume or a Lattice:
+# the transport table (`_STAT_FIELDS_VOLUME`/`_STAT_FIELDS_LATTICE`, which
+# map onto the same names), then the on-axis Ez and Bz.
+STAT_COLUMNS = (
+    "s",
+    "beta_x",
+    "beta_y",
+    "alpha_x",
+    "alpha_y",
+    "emitt_x",
+    "emitt_y",
+    "emitt_4d",
+    "beta_z",
+    "alpha_z",
+    "emitt_z",
+    "sigma_x",
+    "sigma_y",
+    "sigma_z",
+    "sigma_Pz",
+    "sigma_E",
+    "disp_x",
+    "disp_y",
+    "disp_px",
+    "disp_py",
+    "mean_x",
+    "mean_y",
+    "mean_Px",
+    "mean_Py",
+    "mean_K",
+    "mean_E",
+    "mean_P",
+    "rmax",
+    "rmax90",
+    "rmax99",
+    "rmax99.9",
+    "N",
+    "Ez",
+    "Bz",
 )
 
 # %Z (uppercase) is the one token that behaves identically across Bunch6d
@@ -151,12 +233,17 @@ _PARTICLEGROUP_SPECIES = {
 }
 
 
+# `rft.cvar.SC_engine` before `apply_space_charge()` first replaced it,
+# which `reset_space_charge()` restores
+_initial_sc_engine = None
+
+
 def apply_space_charge(beamline, settings):
     """Make RF-Track apply space charge, per `settings`, to `beamline`.
 
     Sets `rft.cvar.SC_engine`, a process-global: it affects every later
-    track in this process, not only `beamline`'s. RF-Track has no way to
-    report which engine is set, nor to unset one.
+    track in this process, not only `beamline`'s, until
+    `reset_space_charge()`.
 
     Args:
         beamline (RF_Track.Lattice or RF_Track.Volume): what will be
@@ -170,8 +257,12 @@ def apply_space_charge(beamline, settings):
     """
     import RF_Track as rft
 
+    global _initial_sc_engine
+
     s = PKDict(settings)
     k = s.kind
+    if _initial_sc_engine is None:
+        _initial_sc_engine = rft.cvar.SC_engine
     if k == "p2p":
         rft.cvar.SC_engine = rft.SpaceCharge_P2P()
     elif k == "pic":
@@ -203,31 +294,14 @@ def bunch6d_to_particlegroup(bunch, species=None):
             own mass/charge (see `_infer_particlegroup_species`).
 
     Raises:
-        ValueError: `species` isn't given and the bunch's mass/charge
-            doesn't match beamphysics' only known species (electron,
-            positron, proton).
+        ValueError: `species` isn't given, and the particles' masses or
+            charges differ, or don't match beamphysics' only known species
+            (electron, positron, proton).
     """
-    m = bunch.get_phase_space("%x %y %t %Px %Py %Pz %m %Q %N %id")
-    x_mm, y_mm, t_mm_c, px_mev, py_mev, pz_mev, mass_mev, q_e, n, pid = m.T
-    if species is None:
-        species = _infer_particlegroup_species(float(mass_mev[0]), float(q_e[0]))
-    c = scipy.constants.c
-    e_coulombs = scipy.constants.e
-    return beamphysics.ParticleGroup(
-        data=dict(
-            x=x_mm / 1000.0,
-            y=y_mm / 1000.0,
-            z=numpy.zeros_like(x_mm),
-            px=px_mev * 1e6,
-            py=py_mev * 1e6,
-            pz=pz_mev * 1e6,
-            t=t_mm_c / (c * 1000.0),
-            weight=n * numpy.abs(q_e) * e_coulombs,
-            species=species,
-            status=numpy.ones_like(x_mm, dtype=int),
-            id=pid.astype(int),
-        )
-    )
+    x, y, t, px, py, pz, m, q, n, i = bunch.get_phase_space(
+        "%x %y %t %Px %Py %Pz %m %Q %N %id"
+    ).T
+    return _particlegroup(x, y, numpy.zeros_like(x), px, py, pz, t, m, q, n, i, species)
 
 
 def bunch6dt_to_particlegroup(bunch, species=None, snapshot_time=True):
@@ -255,32 +329,13 @@ def bunch6dt_to_particlegroup(bunch, species=None, snapshot_time=True):
             (default); `False` uses each particle's creation time `t0`.
 
     Raises:
-        ValueError: `species` isn't given and the bunch's mass/charge
-            doesn't match beamphysics' only known species.
+        ValueError: `species` isn't given, and the particles' masses or
+            charges differ, or don't match beamphysics' only known species.
     """
-    m = bunch.get_phase_space(
+    x, y, z, px, py, pz, t, m, q, n, i = bunch.get_phase_space(
         "%X %Y %Z %Px %Py %Pz " + ("%t" if snapshot_time else "%t0") + " %m %Q %N %id"
-    )
-    x_mm, y_mm, z_mm, px_mev, py_mev, pz_mev, t_mm_c, mass_mev, q_e, n, pid = m.T
-    if species is None:
-        species = _infer_particlegroup_species(float(mass_mev[0]), float(q_e[0]))
-    c = scipy.constants.c
-    e_coulombs = scipy.constants.e
-    return beamphysics.ParticleGroup(
-        data=dict(
-            x=x_mm / 1000.0,
-            y=y_mm / 1000.0,
-            z=z_mm / 1000.0,
-            px=px_mev * 1e6,
-            py=py_mev * 1e6,
-            pz=pz_mev * 1e6,
-            t=t_mm_c / (c * 1000.0),
-            weight=n * numpy.abs(q_e) * e_coulombs,
-            species=species,
-            status=numpy.ones_like(x_mm, dtype=int),
-            id=pid.astype(int),
-        )
-    )
+    ).T
+    return _particlegroup(x, y, z, px, py, pz, t, m, q, n, i, species)
 
 
 def load_field_map(spec):
@@ -334,27 +389,20 @@ def particlegroup_to_bunch6d(pg):
 
     pg = pg.copy()
     pg.drift_to_z()
-    c = scipy.constants.c
-    e_coulombs = scipy.constants.e
-    charge_e = pg.species_charge / e_coulombs
-    n = pg.weight / abs(pg.species_charge)
-    mass_mev = pg.mass / 1e6
-    pz = pg.pz
-    matrix = numpy.column_stack(
-        [
-            pg.x * 1000.0,
-            pg.px / pz * 1000.0,
-            pg.y * 1000.0,
-            pg.py / pz * 1000.0,
-            pg.t * c * 1000.0,
-            numpy.sqrt(pg.px**2 + pg.py**2 + pg.pz**2) / 1e6,
-            numpy.full(len(pg.x), mass_mev),
-            numpy.full(len(pg.x), charge_e),
-            n,
-            pg.id,
-        ]
+    return rft.Bunch6d(
+        numpy.column_stack(
+            [
+                pg.x * 1000.0,
+                pg.px / pg.pz * 1000.0,
+                pg.y * 1000.0,
+                pg.py / pg.pz * 1000.0,
+                pg.t * scipy.constants.c * 1000.0,
+                numpy.sqrt(pg.px**2 + pg.py**2 + pg.pz**2) / 1e6,
+                *_mass_charge_population(pg),
+                pg.id,
+            ]
+        )
     )
-    return rft.Bunch6d(matrix)
 
 
 def particlegroup_to_bunch6dt(pg):
@@ -364,30 +412,40 @@ def particlegroup_to_bunch6dt(pg):
     """
     import RF_Track as rft
 
-    c = scipy.constants.c
-    e_coulombs = scipy.constants.e
-    charge_e = pg.species_charge / e_coulombs
-    n = pg.weight / abs(pg.species_charge)
-    mass_mev = pg.mass / 1e6
-    matrix = numpy.column_stack(
-        [
-            pg.x * 1000.0,
-            pg.px / 1e6,
-            pg.y * 1000.0,
-            pg.py / 1e6,
-            pg.z * 1000.0,
-            pg.pz / 1e6,
-            numpy.full(len(pg.x), mass_mev),
-            numpy.full(len(pg.x), charge_e),
-            n,
-            pg.t * c * 1000.0,
-        ]
+    return rft.Bunch6dT(
+        numpy.column_stack(
+            [
+                pg.x * 1000.0,
+                pg.px / 1e6,
+                pg.y * 1000.0,
+                pg.py / 1e6,
+                pg.z * 1000.0,
+                pg.pz / 1e6,
+                *_mass_charge_population(pg),
+                pg.t * scipy.constants.c * 1000.0,
+            ]
+        )
     )
-    return rft.Bunch6dT(matrix)
 
 
-def save_bpms(volume):
-    """Write `bpms.npy` (rows of S, x, y, total charge) from `volume`'s BPMs.
+def reset_space_charge():
+    """Restore the space-charge engine (`rft.cvar.SC_engine`) that was set
+    before `apply_space_charge()` first replaced it -- RF-Track's own
+    default, unless the caller set one. That default does nothing in a
+    Volume without `sc_dt_mm`, but applies space charge in a Lattice
+    element with `sc_nsteps`. Does nothing if `apply_space_charge()` was
+    never called. A Volume's `sc_dt_mm`, which `apply_space_charge()` also
+    sets, is left as it is.
+    """
+    import RF_Track as rft
+
+    if _initial_sc_engine is not None:
+        rft.cvar.SC_engine = _initial_sc_engine
+
+
+def save_bpms(volume, filename):
+    """Write `volume`'s BPM readings to `filename`, one row per BPM, in
+    `BPM_COLUMNS` order.
 
     get_bpms()/get_nbpms() only exist on Lattice, not Volume -- BPM
     readings aren't supported in Volume mode at all, so this is a no-op
@@ -399,28 +457,28 @@ def save_bpms(volume):
     for bpm in volume.get_bpms():
         x, y, _ = bpm.get_reading()  # mm, mm, mm (z unused)
         rows.append([bpm.get_S(), x, y, bpm.get_total_charge()])
-    numpy.save("bpms.npy", numpy.array(rows))
+    numpy.save(filename, numpy.array(rows))
 
 
 def save_particles(filename, bunch):
-    """Write `bunch`'s phase space, in SI units (`PHASE_SPACE_SCALE`), to
-    `filename`: columns x, xp, y, yp, z, t, Px, Py, Pz, P, E, K, with
-    the RF-Track token string chosen by the bunch's type (`Bunch6d` or
-    `Bunch6dT`).
+    """Write `bunch`'s phase space to `filename`, in `PHASE_SPACE_COLUMNS`
+    order, with the RF-Track token string chosen by the bunch's type
+    (`Bunch6d` or `Bunch6dT`).
     """
     import RF_Track as rft
 
     numpy.save(
         filename,
-        bunch.get_phase_space(
-            _BUNCH6DT_FIELDS if isinstance(bunch, rft.Bunch6dT) else _BUNCH6D_FIELDS
-        )
-        * PHASE_SPACE_SCALE,
+        _phase_space(
+            bunch,
+            _BUNCH6DT_FIELDS if isinstance(bunch, rft.Bunch6dT) else _BUNCH6D_FIELDS,
+        ),
     )
 
 
-def save_screens(volume, initial_bunch):
-    """Write each of `volume`'s screen bunches to `screen-<i>.npy`.
+def save_screens(volume, initial_bunch, filename_format):
+    """Write each of `volume`'s screen bunches to
+    `filename_format.format(<screen index>)`, in `PHASE_SPACE_COLUMNS` order.
 
     `initial_bunch` is the bunch that was tracked: screen bunches are
     always `Bunch6d`, but a `Bunch6dT` one needs different tokens.
@@ -433,12 +491,12 @@ def save_screens(volume, initial_bunch):
         else _BUNCH6D_FIELDS
     )
     for i, bunch in enumerate(volume.get_bunch_at_screens()):
-        numpy.save(f"screen-{i}.npy", bunch.get_phase_space(f) * PHASE_SPACE_SCALE)
+        numpy.save(filename_format.format(i), _phase_space(bunch, f))
 
 
-def save_stats(volume):
-    """Write `stats.npy`: `volume`'s transport table, in SI units, plus the
-    on-axis Ez and Bz at the same positions.
+def save_stats(volume, filename):
+    """Write `volume`'s transport table, in SI units, plus the on-axis Ez
+    and Bz at the same positions, to `filename` in `STAT_COLUMNS` order.
 
     `volume` is an `RF_Track.Volume` or `RF_Track.Lattice`; the transport
     table's tokens differ between the two, so this chooses by type.
@@ -461,12 +519,19 @@ def save_stats(volume):
     # On-axis Ez/Bz: a direct field query (independent of the tracked
     # beam) at x=y=0 and t=0, sampled at the same s positions as the
     # transport table, so it can be selected as another y-axis column
-    # alongside the beam statistics.
+    # alongside the beam statistics. Sampling needs every element's t0 set
+    # to 0; each element's own t0 is put back afterwards, since an unset
+    # t0 makes the next track() autophase the element.
+    saved = _t0_state(volume)
     volume.set_t0(0)
     e, b = volume.get_field(0.0, 0.0, t[:, 0], 0.0)
-    volume.unset_t0()
+    for x, t0 in saved:
+        if t0 is None:
+            x.unset_t0()
+        else:
+            x.set_t0(t0)
     numpy.save(
-        "stats.npy",
+        filename,
         numpy.hstack([t, numpy.array(e)[:, 2:3], numpy.array(b)[:, 2:3]])
         * (_STAT_SCALE_LATTICE if is_lattice else _STAT_SCALE_VOLUME),
     )
@@ -481,3 +546,81 @@ def _infer_particlegroup_species(mass_mev, charge_e):
         f" charge={charge_e} e -- beamphysics only knows electron,"
         " positron, and proton"
     )
+
+
+def _mass_charge_population(pg):
+    """RF-Track's mass [MeV/c^2], charge [e] and population (real particles
+    per macroparticle) columns for `pg`."""
+    n = len(pg.x)
+    return (
+        numpy.full(n, _rftrack_mass_mev(pg)),
+        numpy.full(n, pg.species_charge / scipy.constants.e),
+        pg.weight / abs(pg.species_charge),
+    )
+
+
+def _particlegroup(x, y, z, px, py, pz, t, mass, charge, population, ids, species):
+    """A `ParticleGroup` from RF-Track's columns: positions [mm], momenta
+    [MeV/c], time [mm/c], mass [MeV/c^2], charge [e] and population.
+    `species` is inferred from the mass and charge when `None`."""
+    if species is None:
+        if numpy.any(mass != mass[0]) or numpy.any(charge != charge[0]):
+            raise ValueError(
+                "particles have more than one mass or charge;"
+                + " a ParticleGroup has one species"
+            )
+        species = _infer_particlegroup_species(float(mass[0]), float(charge[0]))
+    return beamphysics.ParticleGroup(
+        data=dict(
+            x=x / 1000.0,
+            y=y / 1000.0,
+            z=z / 1000.0,
+            px=px * 1e6,
+            py=py * 1e6,
+            pz=pz * 1e6,
+            t=t / (scipy.constants.c * 1000.0),
+            weight=population * numpy.abs(charge) * scipy.constants.e,
+            species=species,
+            status=numpy.ones_like(x, dtype=int),
+            id=ids.astype(int),
+        )
+    )
+
+
+def _phase_space(bunch, fields):
+    """`bunch`'s `fields` in SI units (`PHASE_SPACE_SCALE`), plus a last
+    `weight` column: each macroparticle's charge [C], always positive
+    (the sign belongs to the species), as a `ParticleGroup` weight.
+    """
+    q, n = bunch.get_phase_space("%Q %N").T
+    return numpy.column_stack(
+        [
+            bunch.get_phase_space(fields) * PHASE_SPACE_SCALE,
+            numpy.abs(q * n) * scipy.constants.e,
+        ]
+    )
+
+
+def _rftrack_mass_mev(pg):
+    """`pg`'s particle mass [MeV/c^2], using RF-Track's own constant for a
+    species it has one for: beamphysics' (CODATA) values differ in the last
+    digits, which would change a round-tripped bunch's tracking by ~1e-9.
+    """
+    import RF_Track as rft
+
+    return {
+        "electron": rft.electronmass,
+        "positron": rft.electronmass,
+        "proton": rft.protonmass,
+    }.get(pg.species, pg.mass / 1e6)
+
+
+def _t0_state(volume):
+    """`[(element, t0 or None if unset), ...]` for each of `volume`'s
+    elements that has a `t0` (RF elements and screens)."""
+    res = []
+    for i in range(volume.size()):
+        x = volume[i]
+        if hasattr(x, "t0_is_set"):
+            res.append((x, x.get_t0() if x.t0_is_set() else None))
+    return res

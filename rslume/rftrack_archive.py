@@ -1,8 +1,10 @@
 """HDF5 archive format for rslume.rftrack
 
 `RFTrackSimulator.archive()`/`load_archive()` (`rslume.rftrack_simulator`)
-delegate to :func:`archive`/:func:`load_archive` here: this module holds the
-actual beamline + bunch <-> HDF5 serialization, covering only the
+delegate to :func:`archive`/:func:`load_archive` here, and
+:func:`read_archive` reads an archive without RF-Track (e.g. for another
+program to import it). This module holds the actual beamline + bunch <->
+HDF5 serialization, covering only the
 element classes that have a `_serialize_<class>()` function -- not a
 bespoke format of its own, just RF-Track's own native class/attribute
 names, written as plain, self-describing HDF5 any tool can read.
@@ -14,7 +16,6 @@ import beamphysics
 import h5py
 import numpy
 import pykern.pkinspect
-import scipy.constants
 from beamphysics.units import pmd_unit, write_unit_h5
 from pykern.pkcollections import PKDict
 from rslume.rftrack_units import UNITS
@@ -25,14 +26,17 @@ from rslume.rftrack_utils import (
     particlegroup_to_bunch6dt,
 )
 
-# c in mm/ns == m/us, i.e. scipy.constants.c scaled down by 1e6 -- the same
-# scale factor RF-Track's own Corrector.get_kick() uses internally to
-# convert an integrated strength in T.mm to a kick angle in mrad for a
-# given reference momentum in MeV/c (confirmed empirically against the
-# reference manual's documented Kx/Ky units).
-_C_MM_PER_NS = scipy.constants.c / 1e6
-
 _CAVITY_CLASSES = frozenset(("Pillbox_Cavity", "RF_FieldMap_1d", "RF_FieldMap_2d"))
+
+# Volume tracking settings archive() records and load_archive() restores
+_VOLUME_INTEGRATOR_ATTRS = (
+    "dt_mm",
+    "odeint_algorithm",
+    "odeint_epsabs",
+    "odeint_epsrel",
+    "t_max_mm",
+    "tt_dt_mm",
+)
 
 
 def archive(simulator, path, autophase=None, space_charge=None):
@@ -42,9 +46,12 @@ def archive(simulator, path, autophase=None, space_charge=None):
     `path` is also a valid standalone openPMD particle file (readable
     with `beamphysics.ParticleGroup(h5=path)`). The bunch comes back as
     the same macroparticles, not a new realization; the random seed is
-    not recorded. An autophased RF element keeps its phase correction,
-    so a reloaded beamline tracks identically without calling
-    `autophase()` again.
+    not recorded. Each element's aperture and step counts, a Lattice's
+    element offsets and a Volume's integrator settings are recorded too,
+    and an autophased RF element keeps its phase correction, so a
+    reloaded beamline tracks identically without calling `autophase()`
+    again. Space charge is recorded as settings only: after loading, call
+    `RFTrackSimulator.apply_space_charge()` to use it.
 
     Args:
         simulator (RFTrackSimulator): the `Lattice` or `Volume` and the
@@ -67,7 +74,11 @@ def archive(simulator, path, autophase=None, space_charge=None):
     The file is plain HDF5, readable without this module:
 
     - root attrs: `software`, `bunch_type`, `beamline_class`,
-      `autophase`, and `s0`/`s1` for a Volume
+      `autophase`, and for a Volume `s0`/`s1` and its integrator settings
+      (`dt_mm`, `tt_dt_mm`, `odeint_algorithm`, `odeint_epsabs`,
+      `odeint_epsrel`, `t_max_mm`)
+    - `elements_offsets`: for a Lattice, one row per element, as
+      `Lattice.set_elements_offsets()` takes them
     - `elements/<i>`: one group per element, using RF-Track's own
       class and attribute names
     - `field_maps`: each unique array-valued field once, keyed by md5
@@ -123,6 +134,14 @@ def archive(simulator, path, autophase=None, space_charge=None):
                 )
                 / 1000.0
             )
+            for k in _VOLUME_INTEGRATOR_ATTRS:
+                f.attrs[k] = getattr(simulator.beamline, k)
+        else:
+            # one row per element, as Lattice.set_elements_offsets() takes it
+            f.create_dataset(
+                "elements_offsets",
+                data=numpy.asarray(simulator.beamline.get_elements_offsets()),
+            )
         _write_indexed_group(f, "elements", elements)
         if field_maps:
             fm = f.create_group("field_maps")
@@ -150,34 +169,17 @@ def load_archive(simulator, path):
     """
     import RF_Track as rft
 
-    with h5py.File(path, "r") as f:
-        kind = str(f.attrs["beamline_class"])
-        bunch_type = str(f.attrs["bunch_type"])
-        elements = _read_indexed_group(f, "elements")
-        if "field_maps" in f:
-            elements = _resolve_field_map_refs(elements, f["field_maps"])
-        s0 = f.attrs.get("s0")
-        s1 = f.attrs.get("s1")
-        simulator.autophase = (
-            bool(f.attrs["autophase"]) if "autophase" in f.attrs else None
-        )
-        if "space_charge" in f:
-            sc = f["space_charge"]
-            simulator.space_charge = PKDict(sc.attrs)
-            if "grid" in simulator.space_charge:
-                simulator.space_charge.grid = tuple(
-                    int(n) for n in simulator.space_charge.grid
-                )
-        else:
-            simulator.space_charge = None
-        particle_group = beamphysics.ParticleGroup(h5=f)
-    if kind == "Lattice":
+    a = read_archive(path)
+    simulator.autophase = a.autophase
+    simulator.space_charge = a.space_charge
+    if a.beamline_class == "Lattice":
         beamline = rft.Lattice()
-        for e in elements:
+        for e in a.elements:
             beamline.append(_element_from_attrs(rft, e))
-    elif kind == "Volume":
+        beamline.set_elements_offsets(a.elements_offsets)
+    elif a.beamline_class == "Volume":
         beamline = rft.Volume()
-        for e in elements:
+        for e in a.elements:
             beamline.add(
                 _element_from_attrs(rft, e),
                 float(e.x),
@@ -187,15 +189,95 @@ def load_archive(simulator, path):
                 0.0,
                 0.0,
             )
-        beamline.set_s0(float(s0))
-        beamline.set_s1(float(s1))
+        beamline.set_s0(a.s0)
+        beamline.set_s1(a.s1)
+        for k, v in a.integrator.items():
+            setattr(beamline, k, v)
     else:
         raise NotImplementedError(
-            f"don't know how to restore a beamline_class={kind!r}"
+            f"don't know how to restore a beamline_class={a.beamline_class!r}"
         )
     simulator.beamline = beamline
-    simulator.initial_bunch = _particlegroup_to_bunch(particle_group, bunch_type)
+    simulator.initial_bunch = _particlegroup_to_bunch(a.particle_group, a.bunch_type)
     simulator.tracked_bunch = None
+
+
+def read_archive(path):
+    """Read everything `archive()` wrote to `path`, without RF-Track.
+
+    Returns:
+        PKDict:
+            autophase (bool): `None` if not recorded
+            beamline_class (str): "Lattice" or "Volume"
+            bunch_type (str): "Bunch6d" or "Bunch6dT"
+            elements (list): one `PKDict` per element, keyed by RF-Track's
+                class (`class`) and attribute names (see the
+                `_serialize_*` functions), with field maps resolved to arrays
+            elements_offsets (numpy.ndarray): a Lattice's element offsets,
+                as `Lattice.set_elements_offsets()` takes them, else `None`
+            integrator (PKDict): a Volume's `dt_mm`, `tt_dt_mm`,
+                `odeint_algorithm`, `odeint_epsabs`, `odeint_epsrel` and
+                `t_max_mm`, else `None`
+            particle_group (beamphysics.ParticleGroup): the initial bunch
+            s0 (float): a Volume's tracking start [m], else `None`
+            s1 (float): a Volume's tracking end [m], else `None`
+            space_charge (PKDict): see `archive()`, or `None`
+    """
+    with h5py.File(path, "r") as f:
+        elements = _read_indexed_group(f, "elements")
+        if "field_maps" in f:
+            elements = _resolve_field_map_refs(elements, f["field_maps"])
+        space_charge = None
+        if "space_charge" in f:
+            space_charge = PKDict(f["space_charge"].attrs)
+            if "grid" in space_charge:
+                space_charge.grid = tuple(int(n) for n in space_charge.grid)
+        volume = str(f.attrs["beamline_class"]) == "Volume"
+        return PKDict(
+            autophase=bool(f.attrs["autophase"]) if "autophase" in f.attrs else None,
+            beamline_class=str(f.attrs["beamline_class"]),
+            bunch_type=str(f.attrs["bunch_type"]),
+            elements=elements,
+            elements_offsets=None if volume else f["elements_offsets"][()],
+            integrator=(
+                PKDict({k: _attr_value(f.attrs[k]) for k in _VOLUME_INTEGRATOR_ATTRS})
+                if volume
+                else None
+            ),
+            particle_group=beamphysics.ParticleGroup(h5=f),
+            s0=float(f.attrs["s0"]) if "s0" in f.attrs else None,
+            s1=float(f.attrs["s1"]) if "s1" in f.attrs else None,
+            space_charge=space_charge,
+        )
+
+
+def _aperture_is_set(e):
+    """Whether `set_aperture()` was ever called on `e`.
+
+    RF-Track has no getter for that, so this compares with the class's
+    own default: (-0.001, -0.001) for every archivable class except
+    `Pillbox_Cavity`, whose default depends on its geometry, so it is
+    compared with a freshly built cavity of the same geometry.
+    """
+    import RF_Track as rft
+
+    a = (e.get_aperture_x(), e.get_aperture_y())
+    if isinstance(e, rft.Pillbox_Cavity):
+        r = rft.Pillbox_Cavity(
+            numpy.zeros(1),
+            e.get_frequency(),
+            e.get_cell_length(),
+            round(e.get_length() / e.get_cell_length()),
+        )
+        return a != (r.get_aperture_x(), r.get_aperture_y())
+    return a != (-0.001, -0.001)
+
+
+def _attr_value(v):
+    """An HDF5 attr as a plain Python value: h5py returns numpy scalars."""
+    if isinstance(v, bytes):
+        return v.decode()
+    return v.item() if isinstance(v, numpy.generic) else v
 
 
 def _bunch_to_particlegroup(bunch):
@@ -324,7 +406,11 @@ def _element_from_attrs(rft, d):
         raise NotImplementedError(f"don't know how to restore a {cls!r} element yet")
     e = f(rft, d)
     e.set_name(str(d.name))
-    e.set_aperture(float(d.aperture_x), float(d.aperture_y), "circular")
+    if d.aperture_set:
+        e.set_aperture(float(d.aperture_x), float(d.aperture_y), str(d.aperture_shape))
+    e.set_nsteps(int(d.nsteps))
+    e.set_sc_nsteps(int(d.sc_nsteps))
+    e.set_tt_nsteps(int(d.tt_nsteps))
     if "t0" in d:
         e.set_t0(float(d.t0))
     return e
@@ -340,6 +426,11 @@ def _element_to_attrs(e, beamline_class="Lattice"):
     d.name = e.get_name()
     d.aperture_x = e.get_aperture_x()
     d.aperture_y = e.get_aperture_y()
+    d.aperture_set = _aperture_is_set(e)
+    d.aperture_shape = e.get_aperture_shape()
+    d.nsteps = e.get_nsteps()
+    d.sc_nsteps = e.get_sc_nsteps()
+    d.tt_nsteps = e.get_tt_nsteps()
     if beamline_class == "Volume":
         d.update(_position_to_attrs(e))
     # Only Pillbox_Cavity/RF_FieldMap_1d/RF_FieldMap_2d/Screen have
@@ -453,17 +544,8 @@ def _serialize_bpm(e):
 
 
 def _serialize_corrector(e):
-    # there's no direct Kx/Ky getter -- get_kick(p_ref_mev) returns the
-    # EQUIVALENT kick angle in mrad for a particle with that reference
-    # momentum, so this picks an arbitrary nonzero p_ref and inverts the
-    # relation (any p_ref gives the same recovered Kx/Ky).
-    p_ref_mev = 1.0
-    kick = e.get_kick(p_ref_mev)
-    return PKDict(
-        length=e.get_length(),
-        kx=kick[0] * p_ref_mev / _C_MM_PER_NS,
-        ky=kick[1] * p_ref_mev / _C_MM_PER_NS,
-    )
+    kx, ky = e.get_strength()
+    return PKDict(length=e.get_length(), kx=float(kx), ky=float(ky))
 
 
 def _serialize_drift(e):

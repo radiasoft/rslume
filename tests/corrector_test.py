@@ -43,6 +43,8 @@ def test_serialize_recovers_kx_ky_independent_of_reference_momentum():
 
 
 def test_archive_round_trip():
+    import rftrack_util
+    import numpy
     import RF_Track as rft
     from pykern import pkunit
     from rslume.rftrack_simulator import RFTrackSimulator
@@ -55,45 +57,28 @@ def test_archive_round_trip():
     beamline.append(corr)
     beamline.append(rft.Drift(0.1))
 
-    twiss = rft.Bunch6d_twiss()
-    twiss.beta_x = 1.0
-    twiss.beta_y = 1.0
-    twiss.alpha_x = 0.0
-    twiss.alpha_y = 0.0
-    twiss.emitt_x = 1.0
-    twiss.emitt_y = 1.0
-    twiss.sigma_t = 1.0
-    twiss.sigma_pt = 1.0
-    rft.rng_set_seed(5489)
     original = RFTrackSimulator(
         beamline,
-        rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 100.0, twiss, 50),
+        rftrack_util.twiss_bunch(rft, 100.0, 50),
     )
     original.archive(path)
 
     reloaded = RFTrackSimulator()
-    rft.rng_set_seed(5489)
     reloaded.load_archive(path)
-
-    k1 = original.beamline[0].get_kick(1.0)
-    k2 = reloaded.beamline[0].get_kick(1.0)
-    pkunit.pkok(
-        abs(k1[0] - k2[0]) < 1e-6 and abs(k1[1] - k2[1]) < 1e-6,
-        "kick differs: original={} reloaded={}",
-        k1,
-        k2,
+    numpy.testing.assert_allclose(
+        reloaded.beamline[0].get_kick(1.0),
+        original.beamline[0].get_kick(1.0),
+        rtol=1e-12,
     )
 
     original.track()
     reloaded.track()
-    # the reloaded bunch is a new, statistically-equivalent realization
-    # (see RFTrackSimulator.archive()'s docstring), not an exact copy, so
-    # compare within a loose tolerance rather than exact equality
-    o = original.tracked_bunch.get_phase_space("%x").mean()
-    r = reloaded.tracked_bunch.get_phase_space("%x").mean()
-    pkunit.pkok(
-        abs(o - r) < 0.1 * max(abs(o), 1e-9),
-        "mean x differs too much: original={} reloaded={}",
-        o,
-        r,
+    # archive() stores the bunch's own macroparticles, so the reloaded copy
+    # tracks to the same result, particle by particle
+    f = "%x %xp %y %yp %t %P"
+    numpy.testing.assert_allclose(
+        reloaded.tracked_bunch.get_phase_space(f),
+        original.tracked_bunch.get_phase_space(f),
+        rtol=1e-12,
+        atol=1e-12,
     )

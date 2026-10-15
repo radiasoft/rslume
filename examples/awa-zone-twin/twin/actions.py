@@ -16,19 +16,27 @@ diagnostic-bunch logic these need lives on the zone model itself, not
 on `model.simulator`.
 """
 
-import RF_Track as rft
 from lume.actions import ReadOnlyActionMixin, WritableActionMixin
 from lume.variables import NDVariable, ScalarVariable
+from typing import ClassVar
+import RF_Track as rft
+import rslume.rftrack
 
 # Resolution of a screen's served image (AWA's zones have no modeled
 # camera, so this is just a reasonable display resolution).
 IMAGE_BINS = 64
+
+# The parameter of a zone1 solenoid's variable, named like
+# `rslume.rftrack.build_model()`'s by `rslume.rftrack.variable_name()`
+SCALE_FACTOR = "scale_factor"
 
 
 class ChargePcVariable(ScalarVariable, ReadOnlyActionMixin):
     """A zone's total tracked charge, in pC (NaN before there's a bunch
     to measure -- see the owning model's own `diagnostic_bunch()`).
     """
+
+    label: ClassVar[str] = "Charge"
 
     def _get(self, model):
         bunch = model.diagnostic_bunch()
@@ -42,6 +50,8 @@ class EnergyMeVVariable(ScalarVariable, ReadOnlyActionMixin):
     to measure).
     """
 
+    label: ClassVar[str] = "Energy"
+
     def _get(self, model):
         bunch = model.diagnostic_bunch()
         if bunch is None:
@@ -54,6 +64,8 @@ class EnergySpreadPctVariable(ScalarVariable, ReadOnlyActionMixin):
     before there's a bunch to measure, or if the mean energy is exactly
     0).
     """
+
+    label: ClassVar[str] = "Energy spread (rms)"
 
     def _get(self, model):
         bunch = model.diagnostic_bunch()
@@ -98,17 +110,17 @@ class SolenoidScaleFactorVariable(ScalarVariable, WritableActionMixin):
 
 
 def diagnostic_variables(prefix):
-    """`{"<prefix>charge_pC", "<prefix>energy_MeV", "<prefix>energy_spread_pct"}`."""
+    """A zone's diagnostics, `<prefix>charge_pC`, `<prefix>energy_MeV` and
+    `<prefix>energy_spread_pct`, by name. Each has a display `label`."""
     return {
-        f"{prefix}charge_pC": ChargePcVariable(
-            name=f"{prefix}charge_pC", read_only=True, unit="pC"
-        ),
-        f"{prefix}energy_MeV": EnergyMeVVariable(
-            name=f"{prefix}energy_MeV", read_only=True, unit="MeV"
-        ),
-        f"{prefix}energy_spread_pct": EnergySpreadPctVariable(
-            name=f"{prefix}energy_spread_pct", read_only=True, unit="%"
-        ),
+        v.name: v
+        for v in (
+            ChargePcVariable(name=f"{prefix}charge_pC", read_only=True, unit="pC"),
+            EnergyMeVVariable(name=f"{prefix}energy_MeV", read_only=True, unit="MeV"),
+            EnergySpreadPctVariable(
+                name=f"{prefix}energy_spread_pct", read_only=True, unit="%"
+            ),
+        )
     }
 
 
@@ -130,11 +142,14 @@ def solenoid_scale_factor_variables(solenoid_scale_factor):
     `solenoid_scale_factor` (`Zone1Model.solenoid_scale_factor`).
     """
     return {
-        f"{name}_scale_factor": SolenoidScaleFactorVariable(
-            name=f"{name}_scale_factor",
-            solenoid_name=name,
-            default_value=value,
-            unit=None,
+        v.name: v
+        for v in (
+            SolenoidScaleFactorVariable(
+                name=rslume.rftrack.variable_name(name, SCALE_FACTOR),
+                solenoid_name=name,
+                default_value=value,
+                unit=None,
+            )
+            for name, value in solenoid_scale_factor.items()
         )
-        for name, value in solenoid_scale_factor.items()
     }

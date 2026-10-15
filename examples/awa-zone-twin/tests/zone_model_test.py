@@ -49,20 +49,22 @@ def test_zone1_models_do_not_share_state():
 
 def test_handoff_keeps_charge_energy_and_bunch_length():
     sys.path.insert(0, str(_TWIN_DIR))
+    import actions
     from pykern import pkunit
     from zone_model import build_chain
 
     chain = build_chain(n_particles=_N_PARTICLES, threads=_THREADS)
     zone1, zone2 = chain.lume_model_instances
     chain.set({})
-    names = ("charge_pC", "energy_MeV", "energy_spread_pct")
-    for name in names:
-        a = zone1.get([f"zone1_{name}"])[f"zone1_{name}"]
-        b = zone2.get([f"zone2_{name}"])[f"zone2_{name}"]
+    for n1, n2 in zip(
+        actions.diagnostic_variables("zone1_"), actions.diagnostic_variables("zone2_")
+    ):
+        a = zone1.get([n1])[n1]
+        b = zone2.get([n2])[n2]
         pkunit.pkok(
             abs(a - b) < 1e-3 * abs(a),
             "{} changed in handoff: zone1={} zone2={}",
-            name,
+            n2,
             a,
             b,
         )
