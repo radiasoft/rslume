@@ -8,16 +8,13 @@ generic, simulator-level plumbing with no unit conversion or PV-naming
 convention of its own (a facility-specific control-system layer, if
 one is ever needed, belongs on top of these).
 
-Class order here follows the inheritance chain (each base class
-defined before what builds on it), not strict alphabetical order --
-`_RFTrackElementAccessMixin` has to come first despite being private,
-since every other class in this module depends on it.
+`_RFTrackElementAccessMixin` comes first despite being private, since every
+other class here builds on it; the rest are in alphabetical order.
 
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
 from lume.actions import ReadOnlyActionMixin, WritableActionMixin
-from lume.exceptions import ReadOnlyError
 from lume.variables import ScalarVariable
 
 
@@ -36,6 +33,19 @@ class _RFTrackElementAccessMixin:
         getattr(e, f"set_{self.attribute}")(value)
 
 
+class RFTrackReadOnlyActionMixin(_RFTrackElementAccessMixin, ReadOnlyActionMixin):
+    """Read-only action mixin for an RF-Track element attribute."""
+
+    read_only = True
+
+    def _get(self, simulator):
+        return self._get_direct_attribute(simulator)
+
+
+class RFTrackReadOnlyScalarVariable(ScalarVariable, RFTrackReadOnlyActionMixin):
+    """Read-only scalar variable for an RF-Track element attribute."""
+
+
 class RFTrackWritableActionMixin(_RFTrackElementAccessMixin, WritableActionMixin):
     """Writable action mixin for an RF-Track element attribute."""
 
@@ -44,17 +54,6 @@ class RFTrackWritableActionMixin(_RFTrackElementAccessMixin, WritableActionMixin
 
     def _set(self, simulator, value):
         self._set_direct_attribute(simulator, value)
-
-
-class RFTrackReadOnlyActionMixin(RFTrackWritableActionMixin, ReadOnlyActionMixin):
-    """Read-only action mixin for an RF-Track element attribute."""
-
-    read_only = True
-
-    def _set(self, simulator, value):
-        raise ReadOnlyError(
-            "RFTrackReadOnlyActionMixin does not support setting values."
-        )
 
 
 class RFTrackWritableScalarVariable(ScalarVariable, RFTrackWritableActionMixin):
@@ -83,7 +82,3 @@ class RFTrackWritableVectorComponentVariable(
         current = list(getattr(e, f"get_{self.attribute}")())
         current[self.index] = value
         getattr(e, f"set_{self.attribute}")(*current)
-
-
-class RFTrackReadOnlyScalarVariable(ScalarVariable, RFTrackReadOnlyActionMixin):
-    """Read-only scalar variable for an RF-Track element attribute."""

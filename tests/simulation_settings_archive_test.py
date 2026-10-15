@@ -6,22 +6,19 @@ itself returns [] -- there's no way to discover or identify any
 process-global setting from Python). archive()/load_archive() never act
 on these themselves; they're purely informational for the caller.
 
+The tracking settings RF-Track can read back -- a Lattice's element offsets,
+each element's aperture shape and step counts, and a Volume's integrator
+settings -- are archived and restored.
+
 :copyright: Copyright (c) 2026 RadiaSoft LLC.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
 
 def _build_bunch(rft):
-    twiss = rft.Bunch6d_twiss()
-    twiss.beta_x = 1.0
-    twiss.beta_y = 1.0
-    twiss.alpha_x = 0.0
-    twiss.alpha_y = 0.0
-    twiss.emitt_x = 1.0
-    twiss.emitt_y = 1.0
-    twiss.sigma_t = 1.0
-    twiss.sigma_pt = 1.0
-    return rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 10.0, twiss, 20)
+    import rftrack_util
+
+    return rftrack_util.twiss_bunch(rft, 10.0, 20)
 
 
 def _build_lattice(rft):
@@ -110,3 +107,70 @@ def test_rearchive_keeps_loaded_space_charge():
     loaded.archive(second)
     with h5py.File(second, "r") as f:
         pkunit.pkeq("p2p", f["space_charge"].attrs["kind"])
+
+
+def test_lattice_offsets_steps_and_aperture_round_trip():
+    import numpy
+    import RF_Track as rft
+    from pykern import pkunit
+    from rslume.rftrack_simulator import RFTrackSimulator
+
+    path = str(pkunit.empty_work_dir().join("lattice.h5"))
+    lattice = rft.Lattice()
+    for i in range(3):
+        d = rft.Drift(0.1)
+        d.set_name(f"D{i}")
+        d.set_nsteps(7 + i)
+        d.set_sc_nsteps(3 + i)
+        d.set_tt_nsteps(20 + i)
+        lattice.append(d)
+    lattice[1].set_aperture(0.01, 0.02, "rectangular")
+    # x, y, z, (always 1), roll, pitch, yaw
+    offsets = numpy.array(
+        [
+            [0.001, 0.002, 0.0, 1.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+            [-0.003, 0.0, 0.004, 1.0, 0.01, 0.02, 0.0],
+        ]
+    )
+    lattice.set_elements_offsets(offsets)
+    original = RFTrackSimulator(lattice, _build_bunch(rft))
+    original.archive(path)
+    reloaded = RFTrackSimulator()
+    reloaded.load_archive(path)
+    numpy.testing.assert_array_equal(
+        numpy.asarray(reloaded.beamline.get_elements_offsets()), offsets
+    )
+    for i in range(3):
+        o, r = original.beamline[i], reloaded.beamline[i]
+        for g in ("get_nsteps", "get_sc_nsteps", "get_tt_nsteps", "get_aperture_shape"):
+            pkunit.pkeq(getattr(o, g)(), getattr(r, g)(), "element {} {}", i, g)
+    # no tracking comparison: with sc_nsteps set, RF-Track applies its
+    # default space-charge engine, which turns float rounding in the
+    # round-tripped bunch into visible differences for so few particles
+
+
+def test_volume_integrator_round_trip():
+    import RF_Track as rft
+    from pykern import pkunit
+    from rslume.rftrack_simulator import RFTrackSimulator
+
+    path = str(pkunit.empty_work_dir().join("volume.h5"))
+    v = rft.Volume()
+    v.add(rft.Drift(0.5), 0, 0, 0, 0, 0, 0)
+    v.set_s0(0.0)
+    v.set_s1(0.5)
+    settings = dict(
+        dt_mm=0.25,
+        odeint_algorithm="rkf45",
+        odeint_epsabs=1e-8,
+        odeint_epsrel=1e-7,
+        t_max_mm=1234.0,
+        tt_dt_mm=5.0,
+    )
+    for k, x in settings.items():
+        setattr(v, k, x)
+    RFTrackSimulator(v, _build_bunch(rft)).archive(path)
+    reloaded = RFTrackSimulator()
+    reloaded.load_archive(path)
+    pkunit.pkeq(settings, {k: getattr(reloaded.beamline, k) for k in settings})

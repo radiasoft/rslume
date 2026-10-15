@@ -1,9 +1,8 @@
 #!/usr/bin/env python
-"""Generated Python source for the AWA Zone 2 sim, used as the physics
-source `Zone2Model` builds from. Its trailing auto-run `main()` call is
-removed: `main()` itself is kept but never called (see zone_model.py's
-loader). Its own BUNCH/distribution_file are unused by the twin -- zone1's tracked
-output is injected as zone2's initial_particles instead.
+"""
+Simulation notes:
+    https://git.cels.anl.gov/awa/awa-rftrack-lattices
+
 """
 
 from pykern.pkcollections import PKDict
@@ -45,8 +44,8 @@ ELEMENTS = [
         rz=0,
         kind="corrector",
         l=0.085852,
-        h_kick=0,
-        v_kick=0,
+        h_kick=0.0,
+        v_kick=0.0,
     ),
     PKDict(
         name="D_DT8_DQ1",
@@ -79,7 +78,7 @@ ELEMENTS = [
         rz=0,
         kind="quadrupole_k1",
         l=0.1016,
-        k1=0,
+        k1=0.0,
     ),
     PKDict(
         name="D_DQ1_DQ2",
@@ -112,7 +111,7 @@ ELEMENTS = [
         rz=0,
         kind="quadrupole_k1",
         l=0.1016,
-        k1=0,
+        k1=0.0,
     ),
     PKDict(
         name="D_DQ2_DQ3",
@@ -145,7 +144,7 @@ ELEMENTS = [
         rz=0,
         kind="quadrupole_k1",
         l=0.1016,
-        k1=0,
+        k1=0.0,
     ),
     PKDict(
         name="D_DQ3_DT9",
@@ -178,8 +177,8 @@ ELEMENTS = [
         rz=0,
         kind="corrector",
         l=0.085852,
-        h_kick=0,
-        v_kick=0,
+        h_kick=0.0,
+        v_kick=0.0,
     ),
     PKDict(
         name="D_DT9_DT10",
@@ -212,8 +211,8 @@ ELEMENTS = [
         rz=0,
         kind="corrector",
         l=0.085852,
-        h_kick=0,
-        v_kick=0,
+        h_kick=0.0,
+        v_kick=0.0,
     ),
     PKDict(
         name="D_DT10_DQ4",
@@ -246,7 +245,7 @@ ELEMENTS = [
         rz=0,
         kind="quadrupole_k1",
         l=0.168402,
-        k1=3,
+        k1=3.0,
     ),
     PKDict(
         name="D_DQ4_DQ5",
@@ -279,7 +278,7 @@ ELEMENTS = [
         rz=0,
         kind="quadrupole_k1",
         l=0.168402,
-        k1=0,
+        k1=0.0,
     ),
     PKDict(
         name="D_DQ5_DQ6",
@@ -312,7 +311,7 @@ ELEMENTS = [
         rz=0,
         kind="quadrupole_k1",
         l=0.168402,
-        k1=0,
+        k1=0.0,
     ),
     PKDict(
         name="D_DQ6_DQ7",
@@ -345,7 +344,7 @@ ELEMENTS = [
         rz=0,
         kind="quadrupole_k1",
         l=0.168402,
-        k1=-4,
+        k1=-4.0,
     ),
     PKDict(
         name="D_DQ7_DT12",
@@ -378,8 +377,8 @@ ELEMENTS = [
         rz=0,
         kind="corrector",
         l=0.085852,
-        h_kick=0,
-        v_kick=0,
+        h_kick=0.0,
+        v_kick=0.0,
     ),
     PKDict(
         name="D_DT12_YAG5",
@@ -443,7 +442,7 @@ ELEMENTS = [
         rz=0,
         kind="quadrupole_k1",
         l=0.0762,
-        k1=7,
+        k1=7.0,
     ),
     PKDict(
         name="D_DQ8_DQ9",
@@ -476,7 +475,7 @@ ELEMENTS = [
         rz=0,
         kind="quadrupole_k1",
         l=0.0762,
-        k1=3,
+        k1=3.0,
     ),
     PKDict(
         name="D_DQ9_ET2",
@@ -509,8 +508,8 @@ ELEMENTS = [
         rz=0,
         kind="corrector",
         l=0.085852,
-        h_kick=0,
-        v_kick=0,
+        h_kick=0.0,
+        v_kick=0.0,
     ),
     PKDict(
         name="D_ET2_DQ10",
@@ -543,7 +542,7 @@ ELEMENTS = [
         rz=0,
         kind="quadrupole_k1",
         l=0.0762,
-        k1=-8,
+        k1=-8.0,
     ),
     PKDict(
         name="D_DQ10_YAG7",
@@ -580,13 +579,12 @@ ELEMENTS = [
 BUNCH = PKDict(
     charge=-1.0,
     mass_mev=0.51099895069,
-    pc_mev=60,
+    pc_mev=60.0,
     random_seed=5489,
     distribution_file="beam-distributionFile.awa_zone1_output.h5",
-    from_file_z_offset=0.0,
 )
 SETTINGS = PKDict(
-    num_threads=12,
+    num_threads=1,
     space_charge=PKDict(),
 )
 
@@ -627,31 +625,11 @@ def build_beamline():
 
 def build_bunch():
     pg = beamphysics.ParticleGroup(h5=BUNCH.distribution_file)
-    # Already-accelerated bunch (e.g. re-injecting a previous sim's own
-    # tracked output downstream, matching how zone_2.ipynb loads zone_1's
-    # own saved output via
-    # preproc.load_bunch_from_openpmd(bunch_type="Bunch6d")): Pz dominates
-    # here, so the small-angle approximation Bunch6d's x'/y' rely on is
-    # valid -- and Bunch6d is the only bunch type Lattice.track() accepts
-    # at all, so Sequential (Lattice) positioning requires this branch.
-    # RF_Track's native units are mm, mrad, MeV/c, mm/c; ParticleGroup's
-    # are already SI (m, eV/c, s, C).
-    x = pg.x * 1e3
-    y = pg.y * 1e3
-    px = pg.px / 1e6
-    py = pg.py / 1e6
-    pz = pg.pz / 1e6
-    t = pg.t * rft.clight * 1e3
-    population = pg.charge * rft.C
-    xp = numpy.divide(px, pz, out=numpy.zeros_like(px), where=(pz != 0)) * 1e3
-    yp = numpy.divide(py, pz, out=numpy.zeros_like(py), where=(pz != 0)) * 1e3
-    p = numpy.sqrt(px**2 + py**2 + pz**2)
-    return rft.Bunch6d(
-        BUNCH.mass_mev,
-        population,
-        BUNCH.charge,
-        numpy.column_stack([x, xp, y, yp, t, p]),
-    )
+    # Already-accelerated bunch (e.g. re-injecting a previous sim's tracked
+    # output): Bunch6d is the only bunch type Lattice.track() accepts, so
+    # Sequential (Lattice) positioning requires this branch. The group is
+    # drifted to a single z plane first, which keeps the bunch length.
+    return rslume.rftrack_utils.particlegroup_to_bunch6d(pg)
 
 
 def main():
@@ -665,13 +643,12 @@ def main():
 
     model = rslume.rftrack.build_model(ELEMENTS, volume, bunch)
     model.reset()
-    model.simulator.archive("archive-lume.h5")
     rslume.rftrack_utils.save_particles(
         "final_particles.npy", model.simulator.tracked_bunch
     )
-    rslume.rftrack_utils.save_stats(model.simulator.beamline)
-    rslume.rftrack_utils.save_screens(model.simulator.beamline, bunch)
-    rslume.rftrack_utils.save_bpms(model.simulator.beamline)
+    rslume.rftrack_utils.save_stats(model.simulator.beamline, "stats.npy")
+    rslume.rftrack_utils.save_screens(model.simulator.beamline, bunch, "screen-{}.npy")
+    rslume.rftrack_utils.save_bpms(model.simulator.beamline, "bpms.npy")
 
 
 def _build_element(spec):
@@ -692,11 +669,25 @@ def _build_element(spec):
     elif spec.kind == "corrector":
         e = rft.Corrector(spec.l, spec.h_kick, spec.v_kick)
     elif spec.kind == "cavity_analytic":
-        l_cell = rft.clight / (2.0 * spec.frequency_hz)
-        n_cells = max(1, round(spec.l / l_cell))
-        a = numpy.zeros(1)
-        a[-1] = spec.gradient_v_per_m
-        e = rft.Pillbox_Cavity(a, spec.frequency_hz, l_cell, n_cells)
+        # A standing-wave pi-mode structure of half-wavelength cells,
+        # Ez = gradient * cos(n_cells * pi * z / l) on axis, as a field map
+        # so RF-Track derives the off-axis fields from it. Pillbox_Cavity
+        # can't model it: its field repeats unchanged in every cell, and
+        # its off-axis fields for any mode but the first are inconsistent
+        # with Maxwell's equations (B in phase with E). 40 points per cell
+        # gives the energy gain to 0.05%.
+        n_cells = max(1, round(2.0 * spec.l * spec.frequency_hz / rft.clight))
+        l = n_cells * rft.clight / (2.0 * spec.frequency_hz)
+        z = numpy.linspace(0.0, l, 40 * n_cells + 1)
+        e = rft.RF_FieldMap_1d(
+            (spec.gradient_v_per_m * numpy.cos(n_cells * numpy.pi * z / l)).astype(
+                complex
+            ),
+            z[1] - z[0],
+            l,
+            spec.frequency_hz,
+            +1,
+        )
         e.set_phid(spec.phase_deg)
     elif spec.kind == "cavity_fieldmap":
         field, step, length = rslume.rftrack_utils.load_field_map(spec)
@@ -738,3 +729,13 @@ def _build_element(spec):
     if spec.set_aperture:
         e.set_aperture(spec.aperture_x, spec.aperture_y, spec.aperture_type)
     return e
+
+
+# Not "if __name__ == '__main__'": Sirepo runs this file via
+# pykern.pkrunpy.run_path_as_module(), which execs it with __name__ set to
+# a name derived from the filename, never "__main__" -- that guard would
+# silently skip main() entirely under Sirepo's own execution path (no
+# error, just none of the actual work happening) while still appearing to
+# work when run standalone via `python3 parameters.py`, which is how this
+# bug was first missed.
+main()

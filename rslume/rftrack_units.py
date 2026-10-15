@@ -43,6 +43,7 @@ UNITS = PKDict(
     length="m",
     max_current="A",
     n_cells="1",
+    nsteps="1",
     p_actual="W",
     p_map="W",
     phid="deg",
@@ -52,7 +53,9 @@ UNITS = PKDict(
     # analogy with every other RF-Track time-like quantity (t0,
     # set_time_window(), sigma_t) all documented as "mm/c".
     resolution_t="mm/c",
+    sc_nsteps="1",
     t0="mm/c",
+    tt_nsteps="1",
     vkick="T*mm",
     width="mm",
     x="m",

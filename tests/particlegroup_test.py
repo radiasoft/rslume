@@ -12,17 +12,9 @@ electron/positron/proton raises instead of guessing).
 
 
 def _build_bunch(rft):
-    twiss = rft.Bunch6d_twiss()
-    twiss.beta_x = 1.0
-    twiss.beta_y = 1.0
-    twiss.alpha_x = 0.0
-    twiss.alpha_y = 0.0
-    twiss.emitt_x = 1.0
-    twiss.emitt_y = 1.0
-    twiss.sigma_t = 1.0
-    twiss.sigma_pt = 1.0
-    rft.rng_set_seed(5489)
-    return rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 100.0, twiss, 50)
+    import rftrack_util
+
+    return rftrack_util.twiss_bunch(rft, 100.0, 50)
 
 
 def test_bunch6d_to_particlegroup():
@@ -44,6 +36,27 @@ def test_bunch6d_to_particlegroup():
         "expected mean energy near 100 MeV, got {} eV",
         pg.energy.mean(),
     )
+
+
+def test_mixed_species_raises():
+    import numpy
+    import RF_Track as rft
+    from pykern import pkunit
+    from rslume.rftrack_utils import bunch6d_to_particlegroup
+
+    # an electron followed by a positron: the first particle alone would
+    # make it an electron ParticleGroup
+    with pkunit.pkexcept("more than one mass or charge"):
+        bunch6d_to_particlegroup(
+            rft.Bunch6d(
+                numpy.array(
+                    [
+                        [0.0, 0.0, 0.0, 0.0, 0.0, 100.0, rft.electronmass, q, 1.0, i]
+                        for i, q in ((1, -1.0), (2, 1.0))
+                    ]
+                )
+            )
+        )
 
 
 def test_round_trip():

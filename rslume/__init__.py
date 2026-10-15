@@ -1,14 +1,5 @@
 import importlib
 
-__all__ = [
-    "Elegant",
-    "Genesis2",
-    "LUMERFTrackModel",
-    "OPAL",
-    "RFTrackReadOnlyScalarVariable",
-    "RFTrackWritableScalarVariable",
-]
-
 # Each wrapper is imported lazily (PEP 562) so that one wrapper's broken or
 # missing dependency (e.g. lume-genesis/openpmd-beamphysics version drift)
 # only fails when that specific wrapper is used, not for every import of
@@ -22,11 +13,23 @@ _LAZY = {
         "rslume.rftrack_actions",
         "RFTrackReadOnlyScalarVariable",
     ),
+    "RFTrackSimulator": ("rslume.rftrack_simulator", "RFTrackSimulator"),
     "RFTrackWritableScalarVariable": (
         "rslume.rftrack_actions",
         "RFTrackWritableScalarVariable",
     ),
+    "RFTrackWritableVectorComponentVariable": (
+        "rslume.rftrack_actions",
+        "RFTrackWritableVectorComponentVariable",
+    ),
+    "build_model": ("rslume.rftrack", "build_model"),
 }
+
+__all__ = sorted(_LAZY)
+
+
+def __dir__():
+    return sorted(set(globals()) | set(_LAZY))
 
 
 def __getattr__(name):

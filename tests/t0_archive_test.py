@@ -10,19 +10,16 @@ archives *before* track()/autophase() specifically to avoid this case.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
-from volume_archive_test import _build_bunch, _build_volume
-
 
 def test_t0_archive_round_trip():
+    import numpy
     import RF_Track as rft
+    import rftrack_util
     from pykern import pkunit
     from rslume.rftrack_simulator import RFTrackSimulator
 
     path = str(pkunit.empty_work_dir().join("archive.h5"))
-
-    import numpy
-
-    volume = _build_volume(rft)
+    volume = rftrack_util.volume_with_cavity(rft)
     cavity = volume[0]
     p0 = rft.Bunch6d(
         rft.electronmass, 0.0, -1, numpy.array([0.0, 0.0, 0.0, 0.0, 0.0, 10.0])
@@ -35,14 +32,10 @@ def test_t0_archive_round_trip():
     # value, not the real effective phase
     pkunit.pkeq(10.0, cavity.get_phid())
 
-    rft.rng_set_seed(5489)
-    original = RFTrackSimulator(volume, _build_bunch(rft))
+    original = RFTrackSimulator(volume, rftrack_util.twiss_bunch(rft, 10.0, 200))
     original.archive(path)
     original.track()
 
-    # load_archive() reads the archived particles directly -- no new
-    # random draw, so no need to reseed before it (unlike original's
-    # own _build_bunch() call above).
     reloaded = RFTrackSimulator()
     reloaded.load_archive(path)
     pkunit.pkok(reloaded.beamline[0].t0_is_set(), "expected t0 to survive the archive")
@@ -53,17 +46,11 @@ def test_t0_archive_round_trip():
     reloaded.track()
 
     # no autophase() was called on the reloaded copy at all -- t0 alone
-    # reproduces the same physics. Not bit-exact: the bunch itself went
-    # through an openPMD unit round-trip (mm<->m, MeV/c<->eV/c) with its
-    # own float64 rounding, same ~1e-7 relative noise already tolerated
-    # elsewhere (x_band_fodo_archive_test.py).
-    for field in ("x", "y", "K"):
-        o = original.tracked_bunch.get_phase_space(f"%{field}")
-        r = reloaded.tracked_bunch.get_phase_space(f"%{field}")
-        pkunit.pkok(
-            (abs(o - r) < 1e-4 * (abs(o) + 1e-9)).all(),
-            "{} differs too much: original={} reloaded={}",
-            field,
-            o,
-            r,
-        )
+    # reproduces the same physics, particle by particle, to float rounding
+    f = "%x %xp %y %yp %t %P"
+    numpy.testing.assert_allclose(
+        reloaded.tracked_bunch.get_phase_space(f),
+        original.tracked_bunch.get_phase_space(f),
+        rtol=1e-12,
+        atol=1e-12,
+    )

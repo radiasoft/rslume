@@ -54,6 +54,7 @@ def test_peak_field_matches_construction_input():
 
 
 def test_archive_round_trip():
+    import rftrack_util
     import h5py
     import numpy
     import RF_Track as rft
@@ -68,18 +69,7 @@ def test_archive_round_trip():
     v.set_s0(0.0)
     v.set_s1(sol.get_length())
 
-    twiss = rft.Bunch6d_twiss()
-    twiss.beta_x = 1.0
-    twiss.beta_y = 1.0
-    twiss.alpha_x = 0.0
-    twiss.alpha_y = 0.0
-    twiss.emitt_x = 1.0
-    twiss.emitt_y = 1.0
-    twiss.sigma_t = 1.0
-    twiss.sigma_pt = 1.0
-    RFTrackSimulator(
-        v, rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 10.0, twiss, 50)
-    ).archive(path)
+    RFTrackSimulator(v, rftrack_util.twiss_bunch(rft, 10.0, 50)).archive(path)
 
     with h5py.File(path, "r") as f:
         pkunit.pkeq("Static_Magnetic_FieldMap_1d", f["elements"]["0"].attrs["class"])

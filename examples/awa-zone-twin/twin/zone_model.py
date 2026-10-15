@@ -56,15 +56,12 @@ import pathlib
 import rslume.rftrack
 import rslume.rftrack_utils
 
-_SOURCES_DIR = pathlib.Path(__file__).resolve().parent / "sources"
-
-# Neither generated script pins a thread count it can be trusted with
-# (each carries whatever SETTINGS.num_threads its own generating machine
-# happened to have), so `build_chain()` sets one -- capped at
+# Neither generated script's SETTINGS.num_threads is used (only its
+# `main()` reads it), so `build_chain()` sets the thread count -- capped at
 # rft.max_number_of_threads so it stays valid on a machine with fewer cores.
 # 8 is within 8% of the fastest zone1 build at 1000, 2000 and 5000 particles
 # (4-8 threads win; 12 or more is slower).
-_DEFAULT_THREADS = 8
+DEFAULT_THREADS = 8
 
 # Each screen's image field of view [mm, full width] -- NOT the mechanical
 # screen size in ELEMENTS (set_aperture's values): at nominal settings the
@@ -83,6 +80,12 @@ SCREEN_FOV_MM = {
     "YAG5": 6.0,
     "YAG7": 10.0,
 }
+
+# The last line of a Sirepo-generated script, which runs the simulation
+_MAIN_CALL = "\nmain()\n"
+
+# Each source is a script exported from Sirepo, unchanged.
+_SOURCES_DIR = pathlib.Path(__file__).resolve().parent / "sources"
 
 
 class _ZoneModel(LUMEModel):
@@ -304,10 +307,10 @@ def build_chain(n_particles=None, threads=None):
     tracked bunch becomes zone2's input on every `set()`.
 
     `threads` is RF-Track's thread count for every track (default
-    `_DEFAULT_THREADS`, capped at `rft.max_number_of_threads`).
+    `DEFAULT_THREADS`, capped at `rft.max_number_of_threads`).
     """
     rft.cvar.number_of_threads = min(
-        _DEFAULT_THREADS if threads is None else threads, rft.max_number_of_threads
+        DEFAULT_THREADS if threads is None else threads, rft.max_number_of_threads
     )
     return StagedModel([Zone1Model(n_particles), Zone2Model()])
 
@@ -324,11 +327,10 @@ def _find_spec(elements, name):
 
 
 def _load_generated_module(name, lib_dir=None):
-    """Exec `sources/<name>.py` (a generated parameters.py, its
-    trailing auto-run `main()` call already stripped) into a fresh namespace, returning that
-    namespace as a `PKDict` of its top-level names (`ELEMENTS`,
-    `BUNCH`, `SETTINGS`, `build_beamline`, `build_bunch`,
-    `autophase` if the sim used it, ...).
+    """Exec `sources/<name>.py`, without its trailing `main()` call, into a
+    fresh namespace, returning that namespace as a `PKDict` of its
+    top-level names (`ELEMENTS`, `BUNCH`, `SETTINGS`, `build_beamline`,
+    `build_bunch`, `autophase` if the sim used it, ...).
 
     `lib_dir`, if given, rewrites every element's own field-map `file`
     to an absolute path under it -- the generated script's own `file`
@@ -338,8 +340,11 @@ def _load_generated_module(name, lib_dir=None):
     directory.
     """
     path = _SOURCES_DIR / f"{name}.py"
+    text = path.read_text()
+    if not text.endswith(_MAIN_CALL):
+        raise AssertionError(f"{path} does not end with {_MAIN_CALL!r}")
     ns = PKDict(__file__=str(path), __name__=f"rslume_awa_zone_twin.{name}")
-    exec(compile(path.read_text(), str(path), "exec"), ns)
+    exec(compile(text[: -len(_MAIN_CALL)], str(path), "exec"), ns)
     if lib_dir is not None:
         for spec in ns.ELEMENTS:
             if "file" in spec:

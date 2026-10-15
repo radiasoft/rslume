@@ -38,6 +38,7 @@ def _build_volume(rft):
 
 
 def test_bunch6dt_archive_round_trip():
+    import numpy
     import RF_Track as rft
     from pykern import pkunit
     from rslume.rftrack_simulator import RFTrackSimulator
@@ -64,11 +65,10 @@ def test_bunch6dt_archive_round_trip():
 
     # The exact same macroparticles come back (see archive()'s own
     # docstring) -- compare the real phase space, not just statistics.
-    o = original.initial_bunch.get_phase_space("%X %Y %Z %Px %Py %Pz")
-    r = reloaded.initial_bunch.get_phase_space("%X %Y %Z %Px %Py %Pz")
-    pkunit.pkok(
-        (abs(o - r) < 1e-6 * (abs(o) + 1e-9)).all(),
-        "phase space differs too much: original={} reloaded={}",
-        o,
-        r,
+    f = "%X %Y %Z %Px %Py %Pz %t0"
+    numpy.testing.assert_allclose(
+        reloaded.initial_bunch.get_phase_space(f),
+        original.initial_bunch.get_phase_space(f),
+        rtol=1e-12,
+        atol=1e-12,
     )

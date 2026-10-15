@@ -7,8 +7,6 @@ archived with one shared copy, not a byte-for-byte duplicate per element.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
-_RANDOM_SEED = 5489
-
 
 def _build_volume(rft, numpy):
     ez = numpy.zeros(21)
@@ -27,30 +25,19 @@ def _build_volume(rft, numpy):
     return v
 
 
-def _build_bunch(rft):
-    twiss = rft.Bunch6d_twiss()
-    twiss.beta_x = 1.0
-    twiss.beta_y = 1.0
-    twiss.alpha_x = 0.0
-    twiss.alpha_y = 0.0
-    twiss.emitt_x = 1.0
-    twiss.emitt_y = 1.0
-    twiss.sigma_t = 1.0
-    twiss.sigma_pt = 1.0
-    return rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 100.0, twiss, 50)
-
-
 def test_field_map_dedup():
     import h5py
     import numpy
     import RF_Track as rft
     from pykern import pkunit
+    import rftrack_util
     from rslume.rftrack_simulator import RFTrackSimulator
 
     path = str(pkunit.empty_work_dir().join("archive.h5"))
 
-    rft.rng_set_seed(_RANDOM_SEED)
-    original = RFTrackSimulator(_build_volume(rft, numpy), _build_bunch(rft))
+    original = RFTrackSimulator(
+        _build_volume(rft, numpy), rftrack_util.twiss_bunch(rft, 100.0, 50)
+    )
     original.archive(path)
 
     with h5py.File(path, "r") as f:

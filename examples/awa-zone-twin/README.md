@@ -19,7 +19,10 @@ Two things define its shape:
 ## How the pieces fit
 
 The physics is two Sirepo-generated scripts -- "AWA Zone 1" and
-"AWA Zone 2" -- kept in `twin/sources/`.
+"AWA Zone 2" -- kept in `twin/sources/`. Each is Sirepo's exported
+Python source, unchanged: to update one, export it from Sirepo again and
+replace the file. `twin/zone_model.py` runs it without its last line, the
+`main()` call that would run the simulation.
 Each defines `ELEMENTS`, `build_beamline()`, `build_bunch()`, and
 `autophase()`, and gets the rest (`apply_space_charge()`, `build_model()`,
 field-map readers, result writers) from `rslume`; the twin reuses them as they are, so
@@ -43,8 +46,8 @@ each zone's `charge_pC`/`energy_MeV`/`energy_spread_pct`,
 each screen's `<name>_image`, and zone1's `<name>_scale_factor`.
 
 Space charge is zone1 only (zone2 is pure magnetic transport). Neither
-script pins a thread count; `build_chain(threads=...)` sets one (default
-8, capped at the machine's maximum). More threads is not always faster --
+script's thread count is used; `build_chain(threads=...)` sets one (default
+`zone_model.DEFAULT_THREADS`, capped at the machine's maximum). More threads is not always faster --
 a zone1 build measured 27 s at 6 threads and 36 s at 12 for 2000 particles,
 and 44 s at 8 and 47 s at 12 for 5000 -- so try `serve.py --threads`.
 
@@ -94,12 +97,11 @@ From this directory:
 
 ```bash
 cd twin
-python serve.py --threads 8 --n-particles 2000
+python serve.py
 ```
 
 `--threads` sets the RF-Track thread count and `--n-particles` the number of
-macroparticles zone1 tracks; both are optional and the values shown are the
-defaults.
+macroparticles zone1 tracks; `python serve.py --help` shows their defaults.
 
 Wait for `serving 65 variables` (zone1's first build -- field-map I/O,
 autophase, and a space-charge-tracked run -- takes tens of seconds at the
@@ -118,7 +120,8 @@ Expect `Idle`, `0.0001` and about `63` (MeV). `AWA:SIM:STATUS` is `Idle` or
 
 ### Open the display in Phoebus
 
-Regenerate the display if `twin/zone_model.py`'s variables ever change:
+Regenerate the display if the twin's variables ever change
+(`tests/display_test.py` fails until you do):
 
 ```bash
 cd phoebus
@@ -162,10 +165,10 @@ To stop, press Ctrl-C in the server terminal and close Phoebus.
   2000 particles, scaling with particle count. Every
   zone1 PV put pays this cost; a put is acknowledged at once, so a client
   that needs the result must wait for the status PV to return to `Idle`.
-- Zone1's setpoints are all construction-time parameters (solenoid
-  currents and cavity fields are baked into field-map arrays when the
-  element is built), so a zone1 change always rebuilds and re-tracks the
-  whole zone -- there is no cheaper, partial update.
+- A zone1 solenoid's field is baked into its field-map array when the
+  element is built, so changing its scale factor rebuilds the whole zone
+  (field-map I/O and autophase) before re-tracking it. Every other zone1
+  change is set on the element and re-tracks without a rebuild.
 - Misalignments (`*misal` in both zones' defaults) are not exposed as PVs;
   neither is zone1's/zone2's own bunch-generation/tracking configuration
   (particle count, integrator step size, ...), which `serve.py`'s

@@ -81,6 +81,7 @@ def test_serialize_does_not_double_apply_phid():
 
 
 def test_archive_round_trip():
+    import rftrack_util
     import h5py
     import numpy
     import RF_Track as rft
@@ -94,19 +95,9 @@ def test_archive_round_trip():
     beamline.append(cav)
     beamline.append(rft.Drift(0.1))
 
-    twiss = rft.Bunch6d_twiss()
-    twiss.beta_x = 1.0
-    twiss.beta_y = 1.0
-    twiss.alpha_x = 0.0
-    twiss.alpha_y = 0.0
-    twiss.emitt_x = 1.0
-    twiss.emitt_y = 1.0
-    twiss.sigma_t = 1.0
-    twiss.sigma_pt = 1.0
-    rft.rng_set_seed(5489)
     RFTrackSimulator(
         beamline,
-        rft.Bunch6d_QR(rft.electronmass, 0.05 * rft.nC, -1, 100.0, twiss, 30),
+        rftrack_util.twiss_bunch(rft, 100.0, 30),
     ).archive(path)
 
     with h5py.File(path, "r") as f:
@@ -116,7 +107,6 @@ def test_archive_round_trip():
         pkunit.pkeq((11, 6), f["field_maps"][f["elements"]["0"].attrs["ez"][1:]].shape)
 
     reloaded = RFTrackSimulator()
-    rft.rng_set_seed(5489)
     reloaded.load_archive(path)
 
     z_mm = numpy.linspace(0, cav.get_length(), 15) * 1000.0

@@ -42,13 +42,13 @@
       <action type="write_pv">
         <pv_name>loc://selected_element("")</pv_name>
         <value>Gun</value>
-        <description>Gun: PHASE=Gun_phid, POWER=Gun_p_actual</description>
+        <description>Gun: POWER=Gun_p_actual, PHASE=Gun_phid</description>
       </action>
     </actions>
     <text></text>
     <x>20</x><y>125</y><width>20</width><height>70</height>
     <background_color><color red="220" green="60" blue="60"/></background_color>
-    <tooltip>Gun: PHASE=Gun_phid, POWER=Gun_p_actual</tooltip>
+    <tooltip>Gun: POWER=Gun_p_actual, PHASE=Gun_phid</tooltip>
   </widget>
   <widget type="label" version="2.0.0">
     <name>lbl_Gun</name>
@@ -122,13 +122,13 @@
       <action type="write_pv">
         <pv_name>loc://selected_element("")</pv_name>
         <value>L1</value>
-        <description>L1: PHASE=L1_phid, POWER=L1_p_actual</description>
+        <description>L1: POWER=L1_p_actual, PHASE=L1_phid</description>
       </action>
     </actions>
     <text></text>
     <x>58</x><y>125</y><width>20</width><height>70</height>
     <background_color><color red="220" green="60" blue="60"/></background_color>
-    <tooltip>L1: PHASE=L1_phid, POWER=L1_p_actual</tooltip>
+    <tooltip>L1: POWER=L1_p_actual, PHASE=L1_phid</tooltip>
   </widget>
   <widget type="label" version="2.0.0">
     <name>lbl_L1</name>
@@ -194,13 +194,13 @@
       <action type="write_pv">
         <pv_name>loc://selected_element("")</pv_name>
         <value>L2</value>
-        <description>L2: PHASE=L2_phid, POWER=L2_p_actual</description>
+        <description>L2: POWER=L2_p_actual, PHASE=L2_phid</description>
       </action>
     </actions>
     <text></text>
     <x>243</x><y>125</y><width>20</width><height>70</height>
     <background_color><color red="220" green="60" blue="60"/></background_color>
-    <tooltip>L2: PHASE=L2_phid, POWER=L2_p_actual</tooltip>
+    <tooltip>L2: POWER=L2_p_actual, PHASE=L2_phid</tooltip>
   </widget>
   <widget type="label" version="2.0.0">
     <name>lbl_L2</name>
@@ -254,13 +254,13 @@
       <action type="write_pv">
         <pv_name>loc://selected_element("")</pv_name>
         <value>L3</value>
-        <description>L3: PHASE=L3_phid, POWER=L3_p_actual</description>
+        <description>L3: POWER=L3_p_actual, PHASE=L3_phid</description>
       </action>
     </actions>
     <text></text>
     <x>348</x><y>125</y><width>20</width><height>70</height>
     <background_color><color red="220" green="60" blue="60"/></background_color>
-    <tooltip>L3: PHASE=L3_phid, POWER=L3_p_actual</tooltip>
+    <tooltip>L3: POWER=L3_p_actual, PHASE=L3_phid</tooltip>
   </widget>
   <widget type="label" version="2.0.0">
     <name>lbl_L3</name>
@@ -346,13 +346,13 @@
       <action type="write_pv">
         <pv_name>loc://selected_element("")</pv_name>
         <value>L4</value>
-        <description>L4: PHASE=L4_phid, POWER=L4_p_actual</description>
+        <description>L4: POWER=L4_p_actual, PHASE=L4_phid</description>
       </action>
     </actions>
     <text></text>
     <x>492</x><y>125</y><width>20</width><height>70</height>
     <background_color><color red="220" green="60" blue="60"/></background_color>
-    <tooltip>L4: PHASE=L4_phid, POWER=L4_p_actual</tooltip>
+    <tooltip>L4: POWER=L4_p_actual, PHASE=L4_phid</tooltip>
   </widget>
   <widget type="label" version="2.0.0">
     <name>lbl_L4</name>
@@ -366,13 +366,13 @@
       <action type="write_pv">
         <pv_name>loc://selected_element("")</pv_name>
         <value>L5</value>
-        <description>L5: PHASE=L5_phid, POWER=L5_p_actual</description>
+        <description>L5: POWER=L5_p_actual, PHASE=L5_phid</description>
       </action>
     </actions>
     <text></text>
     <x>582</x><y>125</y><width>20</width><height>70</height>
     <background_color><color red="220" green="60" blue="60"/></background_color>
-    <tooltip>L5: PHASE=L5_phid, POWER=L5_p_actual</tooltip>
+    <tooltip>L5: POWER=L5_p_actual, PHASE=L5_phid</tooltip>
   </widget>
   <widget type="label" version="2.0.0">
     <name>lbl_L5</name>
@@ -418,13 +418,13 @@
       <action type="write_pv">
         <pv_name>loc://selected_element("")</pv_name>
         <value>L6</value>
-        <description>L6: PHASE=L6_phid, POWER=L6_p_actual</description>
+        <description>L6: POWER=L6_p_actual, PHASE=L6_phid</description>
       </action>
     </actions>
     <text></text>
     <x>678</x><y>125</y><width>20</width><height>70</height>
     <background_color><color red="220" green="60" blue="60"/></background_color>
-    <tooltip>L6: PHASE=L6_phid, POWER=L6_p_actual</tooltip>
+    <tooltip>L6: POWER=L6_p_actual, PHASE=L6_phid</tooltip>
   </widget>
   <widget type="label" version="2.0.0">
     <name>lbl_L6</name>
@@ -894,7 +894,7 @@
   </widget>
   <widget type="label" version="2.0.0">
     <name>zone1_DiagL2</name>
-    <text>Energy spread [% rms]</text>
+    <text>Energy spread (rms) [%]</text>
     <x>30</x><y>380</y><width>150</width><height>22</height>
   </widget>
   <widget type="textupdate" version="2.0.0">
@@ -939,7 +939,7 @@
   </widget>
   <widget type="label" version="2.0.0">
     <name>zone2_DiagL2</name>
-    <text>Energy spread [% rms]</text>
+    <text>Energy spread (rms) [%]</text>
     <x>630</x><y>380</y><width>150</width><height>22</height>
   </widget>
   <widget type="textupdate" version="2.0.0">
@@ -1025,7 +1025,7 @@
   <widget type="embedded" version="2.0.0">
     <name>editor_Gun</name>
     <file>cavity_controls.bob</file>
-    <macros><NAME>Gun</NAME><PHASE>Gun_phid</PHASE><POWER>Gun_p_actual</POWER></macros>
+    <macros><NAME>Gun</NAME><POWER>Gun_p_actual</POWER><PHASE>Gun_phid</PHASE></macros>
     <x>700</x><y>446</y><width>370</width><height>192</height>
     <visible>false</visible>
     <rules>
@@ -1097,7 +1097,7 @@
   <widget type="embedded" version="2.0.0">
     <name>editor_L1</name>
     <file>cavity_controls.bob</file>
-    <macros><NAME>L1</NAME><PHASE>L1_phid</PHASE><POWER>L1_p_actual</POWER></macros>
+    <macros><NAME>L1</NAME><POWER>L1_p_actual</POWER><PHASE>L1_phid</PHASE></macros>
     <x>700</x><y>446</y><width>370</width><height>192</height>
     <visible>false</visible>
     <rules>
@@ -1151,7 +1151,7 @@
   <widget type="embedded" version="2.0.0">
     <name>editor_L2</name>
     <file>cavity_controls.bob</file>
-    <macros><NAME>L2</NAME><PHASE>L2_phid</PHASE><POWER>L2_p_actual</POWER></macros>
+    <macros><NAME>L2</NAME><POWER>L2_p_actual</POWER><PHASE>L2_phid</PHASE></macros>
     <x>700</x><y>446</y><width>370</width><height>192</height>
     <visible>false</visible>
     <rules>
@@ -1205,7 +1205,7 @@
   <widget type="embedded" version="2.0.0">
     <name>editor_L3</name>
     <file>cavity_controls.bob</file>
-    <macros><NAME>L3</NAME><PHASE>L3_phid</PHASE><POWER>L3_p_actual</POWER></macros>
+    <macros><NAME>L3</NAME><POWER>L3_p_actual</POWER><PHASE>L3_phid</PHASE></macros>
     <x>700</x><y>446</y><width>370</width><height>192</height>
     <visible>false</visible>
     <rules>
@@ -1277,7 +1277,7 @@
   <widget type="embedded" version="2.0.0">
     <name>editor_L4</name>
     <file>cavity_controls.bob</file>
-    <macros><NAME>L4</NAME><PHASE>L4_phid</PHASE><POWER>L4_p_actual</POWER></macros>
+    <macros><NAME>L4</NAME><POWER>L4_p_actual</POWER><PHASE>L4_phid</PHASE></macros>
     <x>700</x><y>446</y><width>370</width><height>192</height>
     <visible>false</visible>
     <rules>
@@ -1295,7 +1295,7 @@
   <widget type="embedded" version="2.0.0">
     <name>editor_L5</name>
     <file>cavity_controls.bob</file>
-    <macros><NAME>L5</NAME><PHASE>L5_phid</PHASE><POWER>L5_p_actual</POWER></macros>
+    <macros><NAME>L5</NAME><POWER>L5_p_actual</POWER><PHASE>L5_phid</PHASE></macros>
     <x>700</x><y>446</y><width>370</width><height>192</height>
     <visible>false</visible>
     <rules>
@@ -1331,7 +1331,7 @@
   <widget type="embedded" version="2.0.0">
     <name>editor_L6</name>
     <file>cavity_controls.bob</file>
-    <macros><NAME>L6</NAME><PHASE>L6_phid</PHASE><POWER>L6_p_actual</POWER></macros>
+    <macros><NAME>L6</NAME><POWER>L6_p_actual</POWER><PHASE>L6_phid</PHASE></macros>
     <x>700</x><y>446</y><width>370</width><height>192</height>
     <visible>false</visible>
     <rules>

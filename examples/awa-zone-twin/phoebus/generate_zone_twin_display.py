@@ -24,12 +24,10 @@ placed at arbitrary, even overlapping z) and each element's *start*
 position for zone2 (a Lattice, sequential) -- `l` (when an element has
 one; cavities/solenoids don't, their length instead comes from their
 field-map file at build time) turns a start into a center for the
-latter. The macro values (which PV each button's editor controls) come
-straight from `build_model()`'s own per-kind naming convention
-(`<name>_phid`, `<name>_k1`, `<name>_hkick`/`<name>_vkick`, ...) --
-`solenoid_fieldmap`'s `<name>_scale_factor` is the one exception,
-`Zone1Model`'s own rebuild-based variable, not one `build_model()`
-itself exposes. So the display follows the code
+latter. The macro values (which PV each button's editor controls) are
+named by `rslume.rftrack.variable_name()`, as `build_model()` names its
+variables -- `solenoid_fieldmap`'s `actions.SCALE_FACTOR` is the one
+parameter `Zone1Model` adds itself. So the display follows the code
 on both counts. Run `python generate_zone_twin_display.py` to
 regenerate; do not edit the `.bob` files by hand.
 """
@@ -42,8 +40,10 @@ from xml.sax.saxutils import escape
 
 from pykern.pkcollections import PKDict
 from rslume.rftrack_units import UNITS
+import rslume.rftrack
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "twin"))
+import actions  # noqa: E402
 from zone_model import (  # noqa: E402
     SCREEN_FOV_MM,
     screen_names,
@@ -98,16 +98,16 @@ _SELECTED_PV = 'loc://selected_element("")'
 
 _EDITOR_WIDTH = 370
 
-# group -> (editor title, editor file, [(label, macro, unit, format), ...]).
-# The macros each editor needs are built per-element by _element_macros()
-# below, not a fixed dict here.
+# group -> (editor title, editor file, [(label, macro, parameter, format), ...]).
+# Each macro is the element's variable for that parameter
+# (_element_macros()).
 _EDITORS = {
     # The scale factor is ~1e-4, so it is shown and entered in
     # exponential notation.
     "solenoid": (
         "Solenoid",
         "solenoid_controls.bob",
-        [("Field scale factor", "SCALE", "", "exponential")],
+        [("Field scale factor", "SCALE", actions.SCALE_FACTOR, "exponential")],
     ),
     # POWER is RF_Track's own P_actual, in W: the field amplitude
     # scales as sqrt(P_actual / P_map). (build_model() has no live
@@ -116,46 +116,35 @@ _EDITORS = {
         "Cavity",
         "cavity_controls.bob",
         [
-            ("Power", "POWER", UNITS.p_actual, "decimal"),
-            ("Phase", "PHASE", UNITS.phid, "decimal"),
+            ("Power", "POWER", "p_actual", "decimal"),
+            ("Phase", "PHASE", "phid", "decimal"),
         ],
     ),
     "corrector": (
         "Corrector",
         "corrector_controls.bob",
         [
-            ("Horizontal", "H", UNITS.hkick, "decimal"),
-            ("Vertical", "V", UNITS.vkick, "decimal"),
+            ("Horizontal", "H", "hkick", "decimal"),
+            ("Vertical", "V", "vkick", "decimal"),
         ],
     ),
     "quadrupole": (
         "Quadrupole",
         "quad_controls.bob",
-        [("Strength k1", "K1", UNITS.k1, "decimal")],
+        [("Strength k1", "K1", "k1", "decimal")],
     ),
 }
 
 
 def _element_macros(group, e):
-    """`{macro: value}` for `e`'s own editor, in `build_model()`'s (or,
-    for a solenoid, `Zone1Model`'s own rebuild-based) PV naming
-    convention. `NAME` is the
-    element's own name, shown in the editor's title.
+    """`{macro: variable name}` for `e`'s own editor. `NAME` is the
+    element's own name, shown in the editor's title. Both zones' cavities
+    are field maps, so each has a `p_actual` (an analytic cavity has none).
     """
-    name = e.name
-    if group == "cavity":
-        # Both of zone1's/zone2's cavities (there are none in zone2)
-        # are fieldmap-sourced, so P_actual always applies; an
-        # analytic cavity has no live amplitude setter at all (see
-        # build_model()'s own docstring) and isn't handled here.
-        return {"NAME": name, "PHASE": f"{name}_phid", "POWER": f"{name}_p_actual"}
-    if group == "solenoid":
-        return {"NAME": name, "SCALE": f"{name}_scale_factor"}
-    if group == "corrector":
-        return {"NAME": name, "H": f"{name}_hkick", "V": f"{name}_vkick"}
-    if group == "quadrupole":
-        return {"NAME": name, "K1": f"{name}_k1"}
-    raise AssertionError(f"unsupported group={group!r}")
+    res = {"NAME": e.name}
+    for _, macro, parameter, _ in _EDITORS[group][2]:
+        res[macro] = rslume.rftrack.variable_name(e.name, parameter)
+    return res
 
 
 def _visible_rule(shown_for):
@@ -449,17 +438,11 @@ def build() -> str:
         ("zone2_", "Zone 2 exit", X0 + WIDTH_PX // 2),
     ):
         d.label(f"{prefix}DiagHeader", label_text, x, y, 300, 20, bold=True)
-        for i, (field, text) in enumerate(
-            (
-                ("charge_pC", "Charge [pC]"),
-                ("energy_MeV", "Energy [MeV]"),
-                ("energy_spread_pct", "Energy spread [% rms]"),
+        for i, v in enumerate(actions.diagnostic_variables(prefix).values()):
+            d.label(
+                f"{prefix}DiagL{i}", f"{v.label} [{v.unit}]", x, y + 26 + i * 24, 150
             )
-        ):
-            d.label(f"{prefix}DiagL{i}", text, x, y + 26 + i * 24, 150)
-            d.value(
-                f"{prefix}DiagV{i}", f"{prefix}{field}", x + 155, y + 26 + i * 24, 110
-            )
+            d.value(f"{prefix}DiagV{i}", v.name, x + 155, y + 26 + i * 24, 110)
     y += 26 + 3 * 24 + 14
 
     # ScreenTabs: a column of tab buttons (navtabs' own VERTICAL default)
@@ -539,7 +522,7 @@ def _editor_height(fields) -> int:
 
 
 def _editor(title: str, fields) -> str:
-    """A small editor `.bob` with, for each `(label, macro, unit, format)`
+    """A small editor `.bob` with, for each `(label, macro, parameter, format)`
     in `fields`, a label, a text entry (it writes the PV once, on Enter,
     so one edit starts one simulation), its unit, and a readback, all on
     `pva://$(P=AWA:SIM:)$(<macro>)`. `format` is `"decimal"` or
@@ -549,7 +532,7 @@ def _editor(title: str, fields) -> str:
     format_index = {"decimal": 1, "exponential": 2}
     y = 50
     widgets = []
-    for label, macro, unit, fmt in fields:
+    for label, macro, parameter, fmt in fields:
         pv = f"pva://$(P={DEFAULT_PREFIX})$({macro})"
         widgets.append(
             f"""  <widget type="label" version="2.0.0">
@@ -568,7 +551,7 @@ def _editor(title: str, fields) -> str:
   </widget>
   <widget type="label" version="2.0.0">
     <name>Unit_{macro}</name>
-    <text>{escape(unit)}</text>
+    <text>{escape(_unit(parameter))}</text>
     <x>280</x><y>{y}</y><width>70</width><height>25</height>
   </widget>"""
         )
@@ -643,6 +626,11 @@ def _screen_view() -> str:
   </widget>
 </display>
 """
+
+
+def _unit(parameter):
+    """The unit of a variable for `parameter`; the scale factor has none."""
+    return "" if parameter == actions.SCALE_FACTOR else UNITS[parameter]
 
 
 def main(argv: list[str] | None = None) -> None:

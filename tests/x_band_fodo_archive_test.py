@@ -5,23 +5,20 @@ against the same "X-band Linac FODO Cell" lattice used by x_band_fodo_test.py.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
-_RANDOM_SEED = 5489
-
-
-def _relative_diff(a, b):
-    return abs(a - b) / abs(a)
-
 
 def test_archive_round_trip():
+    import numpy
     import RF_Track as rft
     from pykern import pkunit
+    import rftrack_util
     from rslume.rftrack_simulator import RFTrackSimulator
-    from x_band_fodo_test import _build_bunch, _build_lattice
 
     path = str(pkunit.empty_work_dir().join("archive.h5"))
 
-    rft.rng_set_seed(_RANDOM_SEED)
-    original = RFTrackSimulator(_build_lattice(rft), _build_bunch(rft))
+    original = RFTrackSimulator(
+        rftrack_util.x_band_fodo_lattice(rft),
+        rftrack_util.twiss_bunch(rft, 100.0, 100, emitt=5.0),
+    )
     original.track()
     original.archive(path)
 
@@ -59,29 +56,12 @@ def test_archive_round_trip():
             i,
         )
 
-    # The exact same macroparticles come back (see archive()'s own
-    # docstring), so tracking them through the same reloaded beamline
-    # reproduces the original tracked result almost exactly -- a loose
-    # tolerance only for the float round trip through openPMD's own SI
-    # units, not a statistical refit.
-    for field in ("x", "y", "K"):
-        o = original.tracked_bunch.get_phase_space(f"%{field}")
-        r = reloaded.tracked_bunch.get_phase_space(f"%{field}")
-        pkunit.pkok(
-            (
-                _relative_diff(o.mean(), r.mean()) < 1e-4
-                if abs(o.mean()) > 1e-9
-                else abs(r.mean()) < 1e-9
-            ),
-            "{} mean differs too much: original={} reloaded={}",
-            field,
-            o.mean(),
-            r.mean(),
-        )
-        pkunit.pkok(
-            _relative_diff(o.std(), r.std()) < 1e-4,
-            "{} std differs too much: original={} reloaded={}",
-            field,
-            o.std(),
-            r.std(),
-        )
+    # archive() stores the bunch's own macroparticles, so the reloaded copy
+    # tracks to the same result, particle by particle, to float rounding
+    f = "%x %xp %y %yp %t %P"
+    numpy.testing.assert_allclose(
+        reloaded.tracked_bunch.get_phase_space(f),
+        original.tracked_bunch.get_phase_space(f),
+        rtol=1e-12,
+        atol=1e-12,
+    )
