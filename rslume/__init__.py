@@ -7,23 +7,21 @@ import importlib
 _LAZY = {
     "Elegant": ("rslume.elegant", "Elegant"),
     "Genesis2": ("rslume.genesis2", "Genesis2"),
-    "LUMERFTrackModel": ("rslume.rftrack", "LUMERFTrackModel"),
     "OPAL": ("rslume.opal", "OPAL"),
-    "RFTrackReadOnlyScalarVariable": (
-        "rslume.rftrack_actions",
-        "RFTrackReadOnlyScalarVariable",
-    ),
-    "RFTrackSimulator": ("rslume.rftrack_simulator", "RFTrackSimulator"),
-    "RFTrackWritableScalarVariable": (
-        "rslume.rftrack_actions",
-        "RFTrackWritableScalarVariable",
-    ),
-    "RFTrackWritableVectorComponentVariable": (
-        "rslume.rftrack_actions",
-        "RFTrackWritableVectorComponentVariable",
-    ),
-    "build_model": ("rslume.rftrack", "build_model"),
 }
+
+# Names rslume's RF-Track wrapper exported before it moved to lume-rftrack:
+# importing rslume.rftrack raises an ImportError saying where it went
+_MOVED_TO_LUME_RFTRACK = frozenset(
+    (
+        "LUMERFTrackModel",
+        "RFTrackReadOnlyScalarVariable",
+        "RFTrackSimulator",
+        "RFTrackWritableScalarVariable",
+        "RFTrackWritableVectorComponentVariable",
+        "build_model",
+    )
+)
 
 __all__ = sorted(_LAZY)
 
@@ -33,6 +31,8 @@ def __dir__():
 
 
 def __getattr__(name):
+    if name in _MOVED_TO_LUME_RFTRACK:
+        importlib.import_module("rslume.rftrack")
     if name not in _LAZY:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     module_name, attr_name = _LAZY[name]
